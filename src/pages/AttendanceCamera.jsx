@@ -23,7 +23,9 @@ const AttendanceCamera = () => {
             const MODEL_URL = '/models';
             try {
                 await Promise.all([
-                    faceapi.nets.ssdMobilenetv1.loadFromUri(MODEL_URL)
+                    faceapi.nets.ssdMobilenetv1.loadFromUri(MODEL_URL),
+                    faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL),
+                    faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL)
                 ]);
                 setModelsLoaded(true);
             } catch (err) {
@@ -92,7 +94,7 @@ const AttendanceCamera = () => {
                     ctx.shadowBlur = 0;
                 });
             }
-        }, 100);
+        }, 500); // Optimized: Reduced frequency from 100ms to 500ms to save resources
         return () => clearInterval(interval);
     };
 
@@ -100,15 +102,33 @@ const AttendanceCamera = () => {
         if (!location) { setStatus('Waiting for GPS...'); return; }
         setLoading(true); setStatus('Verifying Identity...');
 
-        const imageSrc = webcamRef.current.getScreenshot();
-        const blob = await fetch(imageSrc).then(res => res.blob());
-        const formData = new FormData();
-        formData.append('image', blob, 'attendance.jpg');
-        formData.append('studentId', localStorage.getItem('studentId'));
-        formData.append('latitude', location.latitude);
-        formData.append('longitude', location.longitude);
-
         try {
+            const imageSrc = webcamRef.current.getScreenshot();
+
+            // Generate Descriptor Client-Side
+            // Note: We need to use the image element or create one from src to use detectSingleFace
+            const img = await faceapi.fetchImage(imageSrc);
+            const detection = await faceapi.detectSingleFace(img, new faceapi.SsdMobilenetv1Options({ minConfidence: 0.5 }))
+                .withFaceLandmarks()
+                .withFaceDescriptor();
+
+            if (!detection) {
+                setStatus('Face not detected clearly. Try again.');
+                setStatusType('warning');
+                setLoading(false);
+                return;
+            }
+
+            const descriptor = Array.from(detection.descriptor); // Convert Float32Array to normal array
+
+            const blob = await fetch(imageSrc).then(res => res.blob());
+            const formData = new FormData();
+            formData.append('image', blob, 'attendance.jpg');
+            formData.append('studentId', localStorage.getItem('studentId'));
+            formData.append('latitude', location.latitude);
+            formData.append('longitude', location.longitude);
+            formData.append('faceDescriptor', JSON.stringify(descriptor)); // Send descriptor
+
             const res = await axios.post(`${API_BASE_URL}/attendance/mark`, formData, { headers: { 'Content-Type': 'multipart/form-data' } });
 
             const studentName = res.data.studentName || "Student";
@@ -118,7 +138,7 @@ const AttendanceCamera = () => {
             setTimeout(() => navigate('/dashboard'), 4000);
         } catch (error) {
             console.error(error);
-            const msg = error.response?.data?.message || "Not Recognized";
+            const msg = error.response?.data?.message || "Verification Failed";
 
             if (msg.includes("already marked")) {
                 setStatus(msg);
