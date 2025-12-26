@@ -3,7 +3,7 @@ import Webcam from 'react-webcam';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import * as faceapi from 'face-api.js';
-import { MapPin, ScanFace, CheckCircle, AlertCircle, Activity } from 'lucide-react';
+import { MapPin, ScanFace, CheckCircle, AlertCircle, Activity, Sun } from 'lucide-react';
 import { API_BASE_URL } from '../config';
 
 const AttendanceCamera = () => {
@@ -15,7 +15,26 @@ const AttendanceCamera = () => {
     const [location, setLocation] = useState(null);
     const [modelsLoaded, setModelsLoaded] = useState(false);
     const [detectedName, setDetectedName] = useState('');
+    const [ringLightIntensity, setRingLightIntensity] = useState(0); // 0: Off, 1: Low, 2: Medium, 3: High
     const navigate = useNavigate();
+
+    // Toggle Ring Light
+    const toggleRingLight = () => {
+        setRingLightIntensity(prev => (prev + 1) % 4);
+    };
+
+    // Get Ring Light Style
+    const getRingLightStyle = () => {
+        switch (ringLightIntensity) {
+            case 1: return { boxShadow: '0 0 0 10px rgba(255, 255, 255, 0.3), 0 0 30px 10px rgba(255, 255, 255, 0.2)', border: '2px solid rgba(255,255,255,0.5)' };
+            case 2: return { boxShadow: '0 0 0 15px rgba(255, 255, 255, 0.6), 0 0 50px 20px rgba(255, 255, 255, 0.4)', border: '2px solid rgba(255,255,255,0.8)' };
+            case 3: return { boxShadow: '0 0 0 20px rgba(255, 255, 255, 1), 0 0 80px 30px rgba(255, 255, 255, 0.6)', border: '2px solid #fff' };
+            default: return { boxShadow: '0 8px 24px -8px rgba(0,0,0,0.5)', border: 'none' };
+        }
+    };
+
+    // 1. Load Models to 3 detected loop remains same...
+    // ... (This replace block is getting too large, I will use targeted replaces)
 
     // 1. Load Models
     useEffect(() => {
@@ -156,11 +175,26 @@ const AttendanceCamera = () => {
             <div className="glass-card animate-fadeIn" style={{ position: 'relative', width: '100%', maxWidth: '500px', display: 'flex', flexDirection: 'column', gap: '20px', padding: '24px' }}>
 
                 {/* Header */}
-                <div style={{ textAlign: 'center' }}>
-                    <h2 style={{ fontSize: '1.5rem', fontWeight: 'bold', margin: '0 0 8px 0', color: 'white' }}>Attendance</h2>
-                    <p style={{ margin: 0, fontSize: '1rem', color: 'var(--text-muted)' }}>
-                        {localStorage.getItem('studentName')?.split(' ')[0] || 'Student'}
-                    </p>
+                {/* Header with Ring Light Toggle */}
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <div style={{ textAlign: 'left' }}>
+                        <h2 style={{ fontSize: '1.5rem', fontWeight: 'bold', margin: '0 0 4px 0', color: 'white' }}>Attendance</h2>
+                        <p style={{ margin: 0, fontSize: '1rem', color: 'var(--text-muted)' }}>
+                            {localStorage.getItem('studentName')?.split(' ')[0] || 'Student'}
+                        </p>
+                    </div>
+                    <button
+                        onClick={toggleRingLight}
+                        style={{
+                            background: ringLightIntensity > 0 ? 'rgba(255, 255, 255, 0.2)' : 'rgba(255, 255, 255, 0.05)',
+                            border: '1px solid rgba(255, 255, 255, 0.1)',
+                            borderRadius: '12px', width: '48px', height: '48px',
+                            display: 'flex', alignItems: 'center', justifyContent: 'center',
+                            cursor: 'pointer', transition: 'all 0.3s ease'
+                        }}
+                    >
+                        <Sun size={24} color={ringLightIntensity > 0 ? '#fbbf24' : 'white'} fill={ringLightIntensity > 0 ? '#fbbf24' : 'none'} />
+                    </button>
                 </div>
 
                 {/* Camera Feed */}
@@ -169,9 +203,10 @@ const AttendanceCamera = () => {
                     width: '100%',
                     aspectRatio: '1/1', // Square aspect ratio
                     background: 'black',
-                    borderRadius: '20px',
+                    borderRadius: '24px', // Rounded Square
                     overflow: 'hidden',
-                    boxShadow: '0 8px 24px -8px rgba(0,0,0,0.5)'
+                    transition: 'all 0.3s ease',
+                    ...getRingLightStyle()
                 }}>
                     {modelsLoaded ? (
                         <>

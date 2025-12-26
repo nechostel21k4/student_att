@@ -86,64 +86,57 @@ const StudentLayout = () => {
             overflow: 'hidden', background: 'var(--bg-gradient)'
         }}>
 
-            {/* --- DESKTOP SIDEBAR (Visible only on Desktop) --- */}
-            {isDesktop && (
-                <div className="desktop-sidebar" style={{ width: isSidebarExpanded ? '220px' : '70px', padding: '16px 0', transition: 'width 0.3s ease', display: 'flex', flexDirection: 'column', borderRight: '1px solid rgba(255,255,255,0.1)' }}>
-                    <div style={{ marginBottom: '24px', display: 'flex', justifyContent: isSidebarExpanded ? 'space-between' : 'center', alignItems: 'center', padding: '0 12px' }}>
-                        {isSidebarExpanded && (
-                            <h2 style={{ fontSize: '1.2rem', fontWeight: '800', margin: 0, color: 'white' }}>
-                                N<span style={{ color: 'var(--primary)' }}>EC</span>
-                            </h2>
-                        )}
-                        <button
-                            onClick={() => setIsSidebarExpanded(!isSidebarExpanded)}
-                            style={{ background: 'rgba(255,255,255,0.1)', border: 'none', color: 'white', padding: '6px', borderRadius: '8px', cursor: 'pointer' }}
-                        >
-                            <PanelLeft size={18} />
-                        </button>
-                    </div>
-
-                    <nav style={{ flex: 1, padding: '8px', display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                        <NavItem icon={Home} label="Home" path="/dashboard" />
-                        <NavItem icon={Users} label="Roomies" path="/roomies" />
-                        <NavItem icon={FileText} label="Leave" path="/leave" />
-                        <NavItem icon={Activity} label="Last Request" path="/last-request" />
-                        <NavItem icon={Clock} label="History" path="/history" />
-                        <NavItem icon={Shield} label="Incharge" path="/incharge" />
-                        <NavItem icon={AlertCircle} label="Complaint" path="/complaint" />
-                        <NavItem icon={User} label="Profile" path="/profile" />
-                    </nav>
-
-                    <div style={{ borderTop: '1px solid rgba(255,255,255,0.1)', paddingTop: '16px', paddingLeft: '12px', paddingRight: '12px' }}>
-                        <NavItem icon={LogOut} label="Logout" danger />
-                    </div>
-                </div>
-            )}
-
-            {/* --- MOBILE HEADER & HAMBURGER (Visible only on Mobile) --- */}
-            {!isDesktop && (
-                <div style={{
-                    position: 'fixed', top: 0, left: 0, right: 0, zIndex: 100,
-                    background: 'rgba(15, 23, 42, 0.95)', backdropFilter: 'blur(10px)',
-                    padding: '16px 24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-                    borderBottom: '1px solid rgba(255,255,255,0.1)'
-                }}>
-                    <h2 style={{ fontSize: '1.5rem', fontWeight: '800', margin: 0, color: 'white' }}>
-                        N<span style={{ color: 'var(--primary)' }}>EC</span>
-                    </h2>
+            {/* --- DESKTOP SIDEBAR (CSS Handles Toggle) --- */}
+            <div className="desktop-sidebar" style={{ width: isSidebarExpanded ? '220px' : '70px', padding: '16px 0', transition: 'width 0.3s ease', display: 'flex', flexDirection: 'column', borderRight: '1px solid rgba(255,255,255,0.1)' }}>
+                <div style={{ marginBottom: '24px', display: 'flex', justifyContent: isSidebarExpanded ? 'space-between' : 'center', alignItems: 'center', padding: '0 12px' }}>
+                    {isSidebarExpanded && (
+                        <h2 style={{ fontSize: '1.2rem', fontWeight: '800', margin: 0, color: 'white' }}>
+                            N<span style={{ color: 'var(--primary)' }}>EC</span>
+                        </h2>
+                    )}
                     <button
-                        onClick={() => setIsMobileMenuOpen(true)}
-                        style={{ background: 'transparent', border: 'none', color: 'white', cursor: 'pointer' }}
+                        onClick={() => setIsSidebarExpanded(!isSidebarExpanded)}
+                        style={{ background: 'rgba(255,255,255,0.1)', border: 'none', color: 'white', padding: '6px', borderRadius: '8px', cursor: 'pointer' }}
                     >
-                        <Menu size={28} />
+                        <PanelLeft size={18} />
                     </button>
                 </div>
-            )}
+
+                <nav style={{ flex: 1, padding: '8px', display: 'flex', flexDirection: 'column', gap: '4px', overflowY: 'auto' }}>
+                    <NavItem icon={Home} label="Home" path="/dashboard" />
+                    <NavItem icon={Users} label="Roomies" path="/roomies" />
+                    <NavItem icon={FileText} label="Leave" path="/leave" />
+                    <NavItem icon={Activity} label="Last Request" path="/last-request" />
+                    <NavItem icon={Clock} label="History" path="/history" />
+                    <NavItem icon={Shield} label="Incharge" path="/incharge" />
+                    <NavItem icon={AlertCircle} label="Complaint" path="/complaint" />
+                    <NavItem icon={User} label="Profile" path="/profile" />
+                </nav>
+
+                <div style={{ borderTop: '1px solid rgba(255,255,255,0.1)', paddingTop: '16px', paddingLeft: '12px', paddingRight: '12px' }}>
+                    <NavItem icon={LogOut} label="Logout" danger />
+                </div>
+            </div>
+
+
+            {/* --- MOBILE HEADER (CSS Handles Toggle) --- */}
+            <div className="mobile-nav">
+                <h2 style={{ fontSize: '1.5rem', fontWeight: '800', margin: 0, color: 'white' }}>
+                    N<span style={{ color: 'var(--primary)' }}>EC</span>
+                </h2>
+                <button
+                    onClick={() => setIsMobileMenuOpen(true)}
+                    style={{ background: 'transparent', border: 'none', color: 'white', cursor: 'pointer' }}
+                >
+                    <Menu size={28} />
+                </button>
+            </div>
+
 
             {/* --- MOBILE DRAWER OVERLAY --- */}
             {!isDesktop && (
                 <div style={{
-                    position: 'fixed', inset: 0, zIndex: 200,
+                    position: 'fixed', inset: 0, zIndex: 1200,
                     background: 'rgba(0,0,0,0.5)',
                     opacity: isMobileMenuOpen ? 1 : 0,
                     pointerEvents: isMobileMenuOpen ? 'auto' : 'none',
@@ -165,7 +158,7 @@ const StudentLayout = () => {
                             </button>
                         </div>
 
-                        <nav style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                        <nav style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '8px', overflowY: 'auto' }}>
                             <NavItem icon={Home} label="Home" path="/dashboard" />
                             <NavItem icon={Users} label="Roomies" path="/roomies" />
                             <NavItem icon={FileText} label="Leave" path="/leave" />
@@ -185,15 +178,8 @@ const StudentLayout = () => {
 
 
             {/* --- MAIN CONTENT AREA --- */}
-            <div style={{
-                flex: 1,
-                display: 'flex', flexDirection: 'column',
-                height: '100vh', overflow: 'hidden',
-                marginLeft: isDesktop ? (isSidebarExpanded ? '220px' : '70px') : '0',
-                transition: 'margin-left 0.3s ease',
-                position: 'relative'
-            }}>
-                <div style={{ flex: 1, overflowY: 'auto', paddingTop: !isDesktop ? '70px' : '0' }}>
+            <div className={`main-content ${isDesktop && isSidebarExpanded ? 'expanded' : ''}`}>
+                <div className="scroll-container">
                     <Outlet context={{ isSidebarExpanded, isDesktop }} />
                 </div>
             </div>

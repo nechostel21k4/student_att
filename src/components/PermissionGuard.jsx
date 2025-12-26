@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { Camera, MapPin, AlertTriangle, ShieldCheck } from 'lucide-react';
+import { Camera, MapPin, AlertTriangle, ShieldCheck, RefreshCw } from 'lucide-react';
 
 const PermissionGuard = ({ children }) => {
     const [permissions, setPermissions] = useState({
@@ -207,17 +207,38 @@ const PermissionGuard = ({ children }) => {
 
                 {(permissions.camera === 'denied' || permissions.location === 'denied') && (
                     <div style={{
-                        marginTop: '16px', padding: '12px', background: 'rgba(239, 68, 68, 0.1)',
-                        border: '1px solid rgba(239, 68, 68, 0.2)', borderRadius: '8px',
-                        display: 'flex', alignItems: 'start', gap: '12px', textAlign: 'left'
+                        marginTop: '16px', padding: '16px', background: 'rgba(239, 68, 68, 0.1)',
+                        border: '1px solid rgba(239, 68, 68, 0.2)', borderRadius: '12px',
+                        display: 'flex', flexDirection: 'column', gap: '12px'
                     }}>
-                        <AlertTriangle size={20} className="text-red-500 shrink-0 mt-1" />
-                        <div>
-                            <p style={{ fontWeight: 'bold', color: '#fca5a5', marginBottom: '4px' }}>Permissions Denied</p>
-                            <p style={{ fontSize: '0.85rem', color: '#fca5a5' }}>
-                                You have denied access. Please click the lock icon in your browser address bar, reset permissions, and reload the page.
-                            </p>
+                        <div style={{ display: 'flex', gap: '12px' }}>
+                            <AlertTriangle size={24} className="text-red-500 shrink-0" style={{ marginTop: '2px' }} />
+                            <div style={{ textAlign: 'left' }}>
+                                <p style={{ fontWeight: 'bold', color: '#fca5a5', marginBottom: '4px', fontSize: '1rem' }}>Permissions Denied</p>
+                                <p style={{ fontSize: '0.9rem', color: 'rgba(252, 165, 165, 0.9)', lineHeight: '1.5' }}>
+                                    Access to camera or location was denied. Please click the lock icon in your URL bar, reset permissions, and then click the button below.
+                                </p>
+                            </div>
                         </div>
+                        <button
+                            onClick={() => window.location.reload()}
+                            style={{
+                                width: '100%',
+                                padding: '12px',
+                                borderRadius: '8px',
+                                border: 'none',
+                                background: '#ef4444',
+                                color: 'white',
+                                fontWeight: '600',
+                                cursor: 'pointer',
+                                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px',
+                                transition: 'background 0.2s',
+                                fontSize: '1rem'
+                            }}
+                        >
+                            <RefreshCw size={18} />
+                            Reactivate Permissions
+                        </button>
                     </div>
                 )}
             </div>

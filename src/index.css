@@ -121,6 +121,7 @@ h3 {
   margin-bottom: 20px;
   background: linear-gradient(to right, #fff, #94a3b8);
   -webkit-background-clip: text;
+  background-clip: text;
   -webkit-text-fill-color: transparent;
 }
 
@@ -237,10 +238,42 @@ h3 {
 /* Responsive Navigation Utilities */
 .mobile-nav {
   display: flex !important;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 999;
+  background: rgba(15, 23, 42, 0.95);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  padding: 16px 24px;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid var(--glass-border);
+  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
 }
 
 .desktop-sidebar {
   display: none !important;
+}
+
+.main-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  overflow: hidden;
+  margin-left: 0;
+  padding-top: 80px;
+  /* Safe area for mobile header */
+  transition: margin-left 0.3s ease;
+  position: relative;
+}
+
+.scroll-container {
+  flex: 1;
+  overflow-y: auto;
+  padding-top: 0;
 }
 
 @media (min-width: 768px) {
@@ -260,5 +293,14 @@ h3 {
     flex-direction: column;
     z-index: 100;
     transition: width 0.3s ease;
+  }
+
+  .main-content {
+    margin-left: 70px;
+    padding-top: 0;
+  }
+
+  .main-content.expanded {
+    margin-left: 220px;
   }
 }

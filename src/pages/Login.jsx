@@ -2,8 +2,10 @@ import React, { useState } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import { API_BASE_URL } from '../config';
-import { Fingerprint, ArrowRight, Lock, User, Eye, EyeOff } from 'lucide-react';
+import { ArrowRight, Lock, User, Eye, EyeOff } from 'lucide-react';
 import toast, { Toaster } from 'react-hot-toast';
+
+// Force refresh
 
 const Login = () => {
     const [rollNo, setRollNo] = useState('');
@@ -79,13 +81,12 @@ const Login = () => {
                 <div style={{ textAlign: 'center' }}>
                     <div style={{
                         width: '72px', height: '72px', borderRadius: '20px',
-                        background: 'linear-gradient(135deg, rgba(255,255,255,0.1), rgba(255,255,255,0.05))',
-                        border: '1px solid rgba(255,255,255,0.1)',
+                        background: 'white',
                         display: 'flex', alignItems: 'center', justifyContent: 'center',
                         margin: '0 auto 24px auto',
                         boxShadow: '0 8px 32px rgba(0,0,0,0.2)'
                     }}>
-                        <Fingerprint size={36} color="var(--primary)" />
+                        <img src="/Nec.png" alt="Logo" style={{ width: '45px', height: '45px', objectFit: 'contain' }} />
                     </div>
                     <h1 style={{ fontSize: 'clamp(1.5rem, 5vw, 2rem)', fontWeight: '800', margin: 0, color: 'white' }}>Welcome Back</h1>
                     <p style={{ color: 'var(--text-muted)', marginTop: '8px', fontSize: '0.95rem' }}>Sign in to access your portal</p>
@@ -143,7 +144,8 @@ const Login = () => {
                         style={{
                             width: '100%', padding: '16px', borderRadius: '12px', border: 'none',
                             fontSize: '1rem', fontWeight: 'bold', cursor: 'pointer',
-                            marginTop: '8px', opacity: loading ? 0.7 : 1
+                            marginTop: '8px', opacity: loading ? 0.7 : 1,
+                            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px'
                         }}
                     >
                         {loading ? 'Signing In...' : 'Sign In'}
@@ -152,7 +154,10 @@ const Login = () => {
                 </form>
             </div>
 
-            <p style={{ color: 'rgba(255,255,255,0.3)', fontSize: '0.8rem', marginTop: '24px', textAlign: 'center' }}>Secure Campus Access System v2.0</p>
+            <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: '0.9rem', marginTop: '20px', textAlign: 'center' }}>
+                Don't have an account? <span onClick={() => navigate('/register')} style={{ color: 'var(--primary)', fontWeight: 'bold', cursor: 'pointer', textDecoration: 'underline' }}>Register Here</span>
+            </p>
+            <p style={{ color: 'rgba(255,255,255,0.3)', fontSize: '0.8rem', marginTop: '10px', textAlign: 'center' }}>Secure Campus Access System v2.0</p>
         </div>
     );
 };

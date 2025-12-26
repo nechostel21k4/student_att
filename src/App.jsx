@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 import RegisterFace from './pages/RegisterFace';
+import Register from './pages/Register';
 import AttendanceCamera from './pages/AttendanceCamera';
 import StudentLayout from './components/StudentLayout';
 import StudentProfile from './pages/StudentProfile';
@@ -20,6 +21,7 @@ function App() {
     <BrowserRouter>
       <Routes>
         <Route path="/" element={<Login />} />
+        <Route path="/register" element={<Register />} />
 
         {/* Protected Routes with Navigation Layout */}
         <Route element={
