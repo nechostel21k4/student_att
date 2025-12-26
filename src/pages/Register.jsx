@@ -138,7 +138,7 @@ const Register = () => {
                                 value={rollNo}
                                 onChange={(e) => setRollNo(e.target.value.toUpperCase())}
                                 className="input-field"
-                                placeholder="Roll Number (e.g., 21471A0501)"
+                                placeholder="Roll Number (e.g., 22471A05M6)"
                                 aria-label="Roll Number"
                                 style={{ paddingLeft: '48px', marginBottom: '0', textTransform: 'uppercase' }}
                                 required
