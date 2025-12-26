@@ -188,6 +188,7 @@ const AttendanceCamera = () => {
                     </div>
                     <button
                         onClick={toggleRingLight}
+                        aria-label="Toggle Ring Light"
                         style={{
                             background: ringLightIntensity > 0 ? 'rgba(255, 255, 255, 0.2)' : 'rgba(255, 255, 255, 0.05)',
                             border: '1px solid rgba(255, 255, 255, 0.1)',

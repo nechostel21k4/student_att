@@ -139,6 +139,7 @@ const Register = () => {
                                 onChange={(e) => setRollNo(e.target.value.toUpperCase())}
                                 className="input-field"
                                 placeholder="Roll Number (e.g., 21471A0501)"
+                                aria-label="Roll Number"
                                 style={{ paddingLeft: '48px', marginBottom: '0', textTransform: 'uppercase' }}
                                 required
                                 maxLength={10}
@@ -190,12 +191,14 @@ const Register = () => {
                                 onChange={(e) => setPassword(e.target.value)}
                                 className="input-field"
                                 placeholder="Create Password"
+                                aria-label="Create Password"
                                 style={{ paddingLeft: '48px', paddingRight: '48px', marginBottom: '0' }}
                                 required
                             />
                             <button
                                 type="button"
                                 onClick={() => setShowPassword(!showPassword)}
+                                aria-label={showPassword ? "Hide password" : "Show password"}
                                 style={{
                                     position: 'absolute', top: '50%', right: '16px', transform: 'translateY(-50%)',
                                     background: 'none', border: 'none',
@@ -216,6 +219,7 @@ const Register = () => {
                                 onChange={(e) => setConfirmPassword(e.target.value)}
                                 className="input-field"
                                 placeholder="Confirm Password"
+                                aria-label="Confirm Password"
                                 style={{ paddingLeft: '48px', marginBottom: '0' }}
                                 required
                             />
@@ -226,6 +230,7 @@ const Register = () => {
                                 type="button"
                                 onClick={() => { setStep(1); setPassword(''); setConfirmPassword(''); }}
                                 className="btn-secondary"
+                                aria-label="Go back to roll number validation"
                                 style={{ width: 'auto', padding: '16px' }}
                             >
                                 <ArrowLeft size={20} />

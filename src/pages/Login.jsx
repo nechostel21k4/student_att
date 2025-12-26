@@ -104,6 +104,7 @@ const Login = () => {
                             onChange={(e) => setRollNo(e.target.value.toUpperCase())}
                             className="input-field"
                             placeholder="Roll Number"
+                            aria-label="Roll Number"
                             style={{ paddingLeft: '48px', marginBottom: '0' }}
                             required
                         />
@@ -119,12 +120,14 @@ const Login = () => {
                             onChange={(e) => setPassword(e.target.value)}
                             className="input-field"
                             placeholder="Password"
+                            aria-label="Password"
                             style={{ paddingLeft: '48px', paddingRight: '48px', marginBottom: '0' }}
                             required
                         />
                         <button
                             type="button"
                             onClick={() => setShowPassword(!showPassword)}
+                            aria-label={showPassword ? "Hide password" : "Show password"}
                             style={{
                                 position: 'absolute', top: '50%', right: '16px', transform: 'translateY(-50%)',
                                 background: 'none', border: 'none',
@@ -155,7 +158,7 @@ const Login = () => {
             </div>
 
             <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: '0.9rem', marginTop: '20px', textAlign: 'center' }}>
-                Don't have an account? <span onClick={() => navigate('/register')} style={{ color: 'var(--primary)', fontWeight: 'bold', cursor: 'pointer', textDecoration: 'underline' }}>Register Here</span>
+                Don't have an account? <button onClick={() => navigate('/register')} style={{ background: 'none', border: 'none', padding: 0, font: 'inherit', color: 'var(--primary)', fontWeight: 'bold', cursor: 'pointer', textDecoration: 'underline' }}>Register Here</button>
             </p>
             <p style={{ color: 'rgba(255,255,255,0.3)', fontSize: '0.8rem', marginTop: '10px', textAlign: 'center' }}>Secure Campus Access System v2.0</p>
         </div>
