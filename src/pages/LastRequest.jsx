@@ -65,7 +65,13 @@ const LastRequest = () => {
                 <button
                     onClick={() => navigate('/leave')}
                     className="btn-primary"
-                    style={{ marginTop: '24px', width: '100%' }}
+                    style={{
+                        marginTop: '24px', width: '100%',
+                        background: 'linear-gradient(135deg, #6366f1 0%, #4f46e5 100%)',
+                        boxShadow: '0 4px 12px rgba(79, 70, 229, 0.3)',
+                        border: 'none', padding: '12px', borderRadius: '12px',
+                        color: 'white', fontWeight: '600', cursor: 'pointer'
+                    }}
                 >
                     Apply New Request
                 </button>

@@ -2,7 +2,7 @@ import React, { useRef, useState, useEffect } from 'react';
 import Webcam from 'react-webcam';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
-import * as faceapi from 'face-api.js';
+// face-api.js is now dynamically imported
 import { MapPin, ScanFace, CheckCircle, AlertCircle, Activity, Sun } from 'lucide-react';
 import { API_BASE_URL } from '../config';
 
@@ -17,6 +17,7 @@ const AttendanceCamera = () => {
     const [detectedName, setDetectedName] = useState('');
     const [ringLightIntensity, setRingLightIntensity] = useState(0); // 0: Off, 1: Low, 2: Medium, 3: High
     const navigate = useNavigate();
+    const [faceApi, setFaceApi] = useState(null); // Store the dynamically imported library
 
     // Toggle Ring Light
     const toggleRingLight = () => {
@@ -33,18 +34,19 @@ const AttendanceCamera = () => {
         }
     };
 
-    // 1. Load Models to 3 detected loop remains same...
-    // ... (This replace block is getting too large, I will use targeted replaces)
-
-    // 1. Load Models
+    // 1. Load Models Dynamic Import
     useEffect(() => {
         const loadModels = async () => {
             const MODEL_URL = '/models';
             try {
+                // Dynamic Import
+                const faceapiModule = await import('face-api.js');
+                setFaceApi(faceapiModule);
+
                 await Promise.all([
-                    faceapi.nets.ssdMobilenetv1.loadFromUri(MODEL_URL),
-                    faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL),
-                    faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL)
+                    faceapiModule.nets.ssdMobilenetv1.loadFromUri(MODEL_URL),
+                    faceapiModule.nets.faceLandmark68Net.loadFromUri(MODEL_URL),
+                    faceapiModule.nets.faceRecognitionNet.loadFromUri(MODEL_URL)
                 ]);
                 setModelsLoaded(true);
             } catch (err) {
@@ -74,12 +76,12 @@ const AttendanceCamera = () => {
     // 3. Detection Loop
     const handleVideoOnPlay = () => {
         const interval = setInterval(async () => {
-            if (webcamRef.current && webcamRef.current.video && webcamRef.current.video.readyState === 4 && canvasRef.current) {
+            if (webcamRef.current && webcamRef.current.video && webcamRef.current.video.readyState === 4 && canvasRef.current && faceApi) {
                 const video = webcamRef.current.video;
                 const displaySize = { width: video.videoWidth, height: video.videoHeight };
-                faceapi.matchDimensions(canvasRef.current, displaySize);
-                const detections = await faceapi.detectAllFaces(video, new faceapi.SsdMobilenetv1Options({ minConfidence: 0.5 }));
-                const resizedDetections = faceapi.resizeResults(detections, displaySize);
+                faceApi.matchDimensions(canvasRef.current, displaySize);
+                const detections = await faceApi.detectAllFaces(video, new faceApi.SsdMobilenetv1Options({ minConfidence: 0.5 }));
+                const resizedDetections = faceApi.resizeResults(detections, displaySize);
                 const canvas = canvasRef.current;
                 const ctx = canvas.getContext('2d');
                 ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -119,6 +121,7 @@ const AttendanceCamera = () => {
 
     const markAttendance = async () => {
         if (!location) { setStatus('Waiting for GPS...'); return; }
+        if (!faceApi) return;
         setLoading(true); setStatus('Verifying Identity...');
 
         try {
@@ -126,8 +129,8 @@ const AttendanceCamera = () => {
 
             // Generate Descriptor Client-Side
             // Note: We need to use the image element or create one from src to use detectSingleFace
-            const img = await faceapi.fetchImage(imageSrc);
-            const detection = await faceapi.detectSingleFace(img, new faceapi.SsdMobilenetv1Options({ minConfidence: 0.5 }))
+            const img = await faceApi.fetchImage(imageSrc);
+            const detection = await faceApi.detectSingleFace(img, new faceApi.SsdMobilenetv1Options({ minConfidence: 0.5 }))
                 .withFaceLandmarks()
                 .withFaceDescriptor();
 
