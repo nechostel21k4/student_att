@@ -10,20 +10,33 @@ const RegisterFace = () => {
     const [capturing, setCapturing] = useState(false);
     const [message, setMessage] = useState('');
     const [status, setStatus] = useState('idle'); // idle, success, error
+    const [capturedImage, setCapturedImage] = useState(null);
     const navigate = useNavigate();
 
-    const capture = async () => {
+    const handleCapture = () => {
+        const imageSrc = webcamRef.current.getScreenshot();
+        if (imageSrc) {
+            setCapturedImage(imageSrc);
+            setMessage('');
+        }
+    };
+
+    const handleRetake = () => {
+        setCapturedImage(null);
+        setMessage('');
+        setStatus('idle');
+    };
+
+    const registerFace = async () => {
+        if (!capturedImage) return;
         setCapturing(true);
         setMessage('Processing...');
         setStatus('idle');
 
-        const imageSrc = webcamRef.current.getScreenshot();
-        if (!imageSrc) { setMessage('Camera not ready'); setCapturing(false); return; }
-
         try {
             // Resize logic
             const img = new Image();
-            img.src = imageSrc;
+            img.src = capturedImage;
 
             await new Promise((resolve) => { img.onload = resolve; });
 
@@ -70,20 +83,24 @@ const RegisterFace = () => {
                 </h3>
             </div>
 
-            <div className="webcam-container mb-4" style={{ height: '350px', background: 'black' }}>
-                <Webcam
-                    audio={false}
-                    ref={webcamRef}
-                    screenshotFormat="image/jpeg"
-                    width="100%"
-                    height="100%"
-                    videoConstraints={{ facingMode: "user" }}
-                    style={{ borderRadius: '14px', width: '100%', height: '100%', objectFit: 'cover' }}
-                />
+            <div className="webcam-container mb-4" style={{ height: '350px', background: 'black', borderRadius: '14px', overflow: 'hidden' }}>
+                {!capturedImage ? (
+                    <Webcam
+                        audio={false}
+                        ref={webcamRef}
+                        screenshotFormat="image/jpeg"
+                        width="100%"
+                        height="100%"
+                        videoConstraints={{ facingMode: "user" }}
+                        style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                    />
+                ) : (
+                    <img src={capturedImage} alt="Captured" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                )}
             </div>
 
             <p className="text-center" style={{ color: 'var(--text-muted)', marginBottom: '20px', fontSize: '0.9rem', padding: '0 10px' }}>
-                Ensure your face is clearly visible and well-lit. Remove glasses/masks for best results.
+                {!capturedImage ? "Ensure your face is clearly visible and well-lit." : "Review your photo. Ensure face is clear."}
             </p>
 
             {message && (
@@ -97,15 +114,36 @@ const RegisterFace = () => {
                 </div>
             )}
 
-            <button
-                onClick={capture}
-                disabled={capturing}
-                className="btn btn-primary"
-                style={{ height: '56px', fontSize: '1.1rem' }}
-            >
-                <Camera size={20} />
-                {capturing ? 'Processing...' : 'Capture & Register'}
-            </button>
+            {!capturedImage ? (
+                <button
+                    onClick={handleCapture}
+                    disabled={capturing}
+                    className="btn btn-primary"
+                    style={{ height: '56px', fontSize: '1.1rem', width: '100%' }}
+                >
+                    <Camera size={20} />
+                    Capture Photo
+                </button>
+            ) : (
+                <div className="flex gap-3">
+                    <button
+                        onClick={handleRetake}
+                        disabled={capturing}
+                        className="btn"
+                        style={{ flex: 1, height: '56px', background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.2)' }}
+                    >
+                        Retake
+                    </button>
+                    <button
+                        onClick={registerFace}
+                        disabled={capturing}
+                        className="btn btn-primary"
+                        style={{ flex: 1, height: '56px' }}
+                    >
+                        {capturing ? 'Processing...' : 'Confirm & Register'}
+                    </button>
+                </div>
+            )}
         </div>
     );
 };
