@@ -3,7 +3,7 @@ import Webcam from 'react-webcam';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 // face-api.js is now dynamically imported
-import { MapPin, ScanFace, CheckCircle, AlertCircle, Activity, Sun } from 'lucide-react';
+import { MapPin, ScanFace, CheckCircle, AlertCircle, Activity } from 'lucide-react';
 import { API_BASE_URL } from '../config';
 
 const AttendanceCamera = () => {
@@ -15,24 +15,10 @@ const AttendanceCamera = () => {
     const [location, setLocation] = useState(null);
     const [modelsLoaded, setModelsLoaded] = useState(false);
     const [detectedName, setDetectedName] = useState('');
-    const [ringLightIntensity, setRingLightIntensity] = useState(0); // 0: Off, 1: Low, 2: Medium, 3: High
     const navigate = useNavigate();
     const [faceApi, setFaceApi] = useState(null); // Store the dynamically imported library
 
-    // Toggle Ring Light
-    const toggleRingLight = () => {
-        setRingLightIntensity(prev => (prev + 1) % 4);
-    };
 
-    // Get Ring Light Style
-    const getRingLightStyle = () => {
-        switch (ringLightIntensity) {
-            case 1: return { boxShadow: '0 0 0 10px rgba(255, 255, 255, 0.3), 0 0 30px 10px rgba(255, 255, 255, 0.2)', border: '2px solid rgba(255,255,255,0.5)' };
-            case 2: return { boxShadow: '0 0 0 15px rgba(255, 255, 255, 0.6), 0 0 50px 20px rgba(255, 255, 255, 0.4)', border: '2px solid rgba(255,255,255,0.8)' };
-            case 3: return { boxShadow: '0 0 0 20px rgba(255, 255, 255, 1), 0 0 80px 30px rgba(255, 255, 255, 0.6)', border: '2px solid #fff' };
-            default: return { boxShadow: '0 8px 24px -8px rgba(0,0,0,0.5)', border: 'none' };
-        }
-    };
 
     // 1. Load Models Dynamic Import
     useEffect(() => {
@@ -86,34 +72,10 @@ const AttendanceCamera = () => {
                 const ctx = canvas.getContext('2d');
                 ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-                // Custom Drawing Logic
-                resizedDetections.forEach(detection => {
-                    const { x, y, width, height } = detection.box;
-
-                    // Rounded Rectangle Glow
-                    ctx.shadowBlur = 15;
-                    ctx.shadowColor = '#00ffcc';
-                    ctx.strokeStyle = '#00ffcc';
-                    ctx.lineWidth = 3;
-
-                    // Draw Rounded Rect manually
-                    const radius = 12;
-                    ctx.beginPath();
-                    ctx.moveTo(x + radius, y);
-                    ctx.lineTo(x + width - radius, y);
-                    ctx.quadraticCurveTo(x + width, y, x + width, y + radius);
-                    ctx.lineTo(x + width, y + height - radius);
-                    ctx.quadraticCurveTo(x + width, y + height, x + width - radius, y + height);
-                    ctx.lineTo(x + radius, y + height);
-                    ctx.quadraticCurveTo(x, y + height, x, y + height - radius);
-                    ctx.lineTo(x, y + radius);
-                    ctx.quadraticCurveTo(x, y, x + radius, y);
-                    ctx.closePath();
-                    ctx.stroke();
-
-                    // Optional: Reset shadow for other elements if drawn
-                    ctx.shadowBlur = 0;
-                });
+                // Custom Drawing Logic intentionally removed to show clean feed
+                // If we want to show just a subtle box, we can uncomment simple drawing
+                // But user requested removal of "neon green border"
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
             }
         }, 500); // Optimized: Reduced frequency from 100ms to 500ms to save resources
         return () => clearInterval(interval);
@@ -178,27 +140,12 @@ const AttendanceCamera = () => {
             <div className="glass-card animate-fadeIn" style={{ position: 'relative', width: '100%', maxWidth: '500px', display: 'flex', flexDirection: 'column', gap: '20px', padding: '24px' }}>
 
                 {/* Header */}
-                {/* Header with Ring Light Toggle */}
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <div style={{ textAlign: 'left' }}>
-                        <h2 style={{ fontSize: '1.5rem', fontWeight: 'bold', margin: '0 0 4px 0', color: 'white' }}>Attendance</h2>
-                        <p style={{ margin: 0, fontSize: '1rem', color: 'var(--text-muted)' }}>
-                            {localStorage.getItem('studentName')?.split(' ')[0] || 'Student'}
-                        </p>
-                    </div>
-                    <button
-                        onClick={toggleRingLight}
-                        aria-label="Toggle Ring Light"
-                        style={{
-                            background: ringLightIntensity > 0 ? 'rgba(255, 255, 255, 0.2)' : 'rgba(255, 255, 255, 0.05)',
-                            border: '1px solid rgba(255, 255, 255, 0.1)',
-                            borderRadius: '12px', width: '48px', height: '48px',
-                            display: 'flex', alignItems: 'center', justifyContent: 'center',
-                            cursor: 'pointer', transition: 'all 0.3s ease'
-                        }}
-                    >
-                        <Sun size={24} color={ringLightIntensity > 0 ? '#fbbf24' : 'white'} fill={ringLightIntensity > 0 ? '#fbbf24' : 'none'} />
-                    </button>
+                {/* Header */}
+                <div style={{ textAlign: 'left' }}>
+                    <h2 style={{ fontSize: '1.5rem', fontWeight: 'bold', margin: '0 0 4px 0', color: 'white' }}>Attendance</h2>
+                    <p style={{ margin: 0, fontSize: '1rem', color: 'var(--text-muted)' }}>
+                        {localStorage.getItem('studentName')?.split(' ')[0] || 'Student'}
+                    </p>
                 </div>
 
                 {/* Camera Feed */}
@@ -210,7 +157,7 @@ const AttendanceCamera = () => {
                     borderRadius: '24px', // Rounded Square
                     overflow: 'hidden',
                     transition: 'all 0.3s ease',
-                    ...getRingLightStyle()
+                    boxShadow: '0 8px 24px -8px rgba(0,0,0,0.5)'
                 }}>
                     {modelsLoaded ? (
                         <>
