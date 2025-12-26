@@ -88,11 +88,28 @@ const AttendanceCamera = () => {
 
         try {
             const imageSrc = webcamRef.current.getScreenshot();
+            if (!imageSrc) {
+                setStatus('Camera capture failed');
+                setLoading(false);
+                return;
+            }
 
-            // Generate Descriptor Client-Side
-            // Note: We need to use the image element or create one from src to use detectSingleFace
-            const img = await faceApi.fetchImage(imageSrc);
-            const detection = await faceApi.detectSingleFace(img, new faceApi.SsdMobilenetv1Options({ minConfidence: 0.5 }))
+            // Resize Logic
+            const img = new Image();
+            img.src = imageSrc;
+            await new Promise((resolve) => { img.onload = resolve; });
+
+            const canvas = document.createElement('canvas');
+            const MAX_WIDTH = 640;
+            const scaleSize = MAX_WIDTH / img.width;
+            canvas.width = MAX_WIDTH;
+            canvas.height = img.height * scaleSize;
+
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+
+            // Generate Descriptor Client-Side (Use resized canvas - Faster)
+            const detection = await faceApi.detectSingleFace(canvas, new faceApi.SsdMobilenetv1Options({ minConfidence: 0.5 }))
                 .withFaceLandmarks()
                 .withFaceDescriptor();
 
@@ -105,7 +122,9 @@ const AttendanceCamera = () => {
 
             const descriptor = Array.from(detection.descriptor); // Convert Float32Array to normal array
 
-            const blob = await fetch(imageSrc).then(res => res.blob());
+            // Create compressed blob from canvas
+            const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/jpeg', 0.8));
+
             const formData = new FormData();
             formData.append('image', blob, 'attendance.jpg');
             formData.append('studentId', localStorage.getItem('studentId'));

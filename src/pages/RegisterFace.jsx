@@ -20,12 +20,28 @@ const RegisterFace = () => {
         const imageSrc = webcamRef.current.getScreenshot();
         if (!imageSrc) { setMessage('Camera not ready'); setCapturing(false); return; }
 
-        const blob = await fetch(imageSrc).then(res => res.blob());
-        const formData = new FormData();
-        formData.append('image', blob, 'face.jpg');
-        formData.append('rollNo', localStorage.getItem('studentId'));
-
         try {
+            // Resize logic
+            const img = new Image();
+            img.src = imageSrc;
+
+            await new Promise((resolve) => { img.onload = resolve; });
+
+            const canvas = document.createElement('canvas');
+            const MAX_WIDTH = 640;
+            const scaleSize = MAX_WIDTH / img.width;
+            canvas.width = MAX_WIDTH;
+            canvas.height = img.height * scaleSize;
+
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+
+            const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/jpeg', 0.8));
+
+            const formData = new FormData();
+            formData.append('image', blob, 'face.jpg');
+            formData.append('rollNo', localStorage.getItem('studentId'));
+
             await axios.post(`${API_BASE_URL}/attendance/register-face`, formData, { headers: { 'Content-Type': 'multipart/form-data' } });
             setMessage('Face Registered Successfully!');
             setStatus('success');
