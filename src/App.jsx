@@ -15,7 +15,7 @@ const StudentComplaint = lazy(() => import('./pages/StudentComplaint'));
 const StudentRoomies = lazy(() => import('./pages/StudentRoomies'));
 const LastRequest = lazy(() => import('./pages/LastRequest'));
 
-import PermissionGuard from './components/PermissionGuard';
+const PermissionGuard = lazy(() => import('./components/PermissionGuard'));
 
 // Loading Fallback Component
 const PageLoader = () => (
