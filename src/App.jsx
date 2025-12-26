@@ -13,6 +13,8 @@ import StudentComplaint from './pages/StudentComplaint';
 import StudentRoomies from './pages/StudentRoomies';
 import LastRequest from './pages/LastRequest';
 
+import PermissionGuard from './components/PermissionGuard';
+
 function App() {
   return (
     <BrowserRouter>
@@ -20,7 +22,11 @@ function App() {
         <Route path="/" element={<Login />} />
 
         {/* Protected Routes with Navigation Layout */}
-        <Route element={<StudentLayout />}>
+        <Route element={
+          <PermissionGuard>
+            <StudentLayout />
+          </PermissionGuard>
+        }>
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/register-face" element={<RegisterFace />} />
           <Route path="/attendance" element={<AttendanceCamera />} />
