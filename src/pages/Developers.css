@@ -536,7 +536,12 @@
     }
 
     .modal-socials {
+        display: flex;
+        justify-content: center;
+        align-items: center;
         gap: 1rem;
+        width: 100%;
+        /* Ensure full width for centering */
     }
 
     .modal-socials .social-link {

@@ -213,15 +213,21 @@ const Developers = () => {
                                             <Linkedin size={24} />
                                         </a>
                                     )}
-                                    <a href={selectedDev.github || "#"} target="_blank" rel="noopener noreferrer" className="social-link" title="GitHub">
-                                        <Github size={24} />
-                                    </a>
-                                    <a href={selectedDev.facebook || "#"} target="_blank" rel="noopener noreferrer" className="social-link" title="Facebook">
-                                        <Facebook size={24} />
-                                    </a>
-                                    <a href={selectedDev.instagram || "#"} target="_blank" rel="noopener noreferrer" className="social-link" title="Instagram">
-                                        <Instagram size={24} />
-                                    </a>
+                                    {selectedDev.github && (
+                                        <a href={selectedDev.github} target="_blank" rel="noopener noreferrer" className="social-link" title="GitHub">
+                                            <Github size={24} />
+                                        </a>
+                                    )}
+                                    {selectedDev.facebook && (
+                                        <a href={selectedDev.facebook} target="_blank" rel="noopener noreferrer" className="social-link" title="Facebook">
+                                            <Facebook size={24} />
+                                        </a>
+                                    )}
+                                    {selectedDev.instagram && (
+                                        <a href={selectedDev.instagram} target="_blank" rel="noopener noreferrer" className="social-link" title="Instagram">
+                                            <Instagram size={24} />
+                                        </a>
+                                    )}
                                 </div>
                             </div>
                         </motion.div>
