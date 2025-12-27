@@ -1,0 +1,103 @@
+/* Login.css */
+.login-container {
+    min-height: 100vh;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    overflow: hidden;
+    background: var(--bg-gradient);
+    padding: 20px;
+}
+
+.login-bg-orb {
+    position: absolute;
+    width: 50vw;
+    height: 50vw;
+    max-width: 400px;
+    max-height: 400px;
+    filter: blur(100px);
+    opacity: 0.3;
+    border-radius: 50%;
+    z-index: 0;
+}
+
+.login-glass-card {
+    width: 100%;
+    max-width: 420px;
+    padding: clamp(24px, 5vw, 40px);
+    display: flex;
+    flex-direction: column;
+    gap: clamp(20px, 3vw, 32px);
+    z-index: 1;
+    margin: 0;
+    /* Glassmorphism from global usually, ensuring here */
+    background: rgba(255, 255, 255, 0.05);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 24px;
+    box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+}
+
+.login-logo-container {
+    width: 72px;
+    height: 72px;
+    border-radius: 20px;
+    background: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 24px auto;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+}
+
+.login-title {
+    font-size: clamp(1.5rem, 5vw, 2rem);
+    font-weight: 800;
+    margin: 0;
+    color: white;
+}
+
+.developers-btn {
+    position: absolute;
+    bottom: 20px;
+    right: 20px;
+    background: rgba(255, 255, 255, 0.05);
+    /* Lighter base */
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    /* Softer border */
+    padding: 10px 20px;
+    /* Slightly larger clickable area */
+    border-radius: 30px;
+    /* More pill-like */
+    color: rgba(255, 255, 255, 0.7);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 0.85rem;
+    font-weight: 500;
+    letter-spacing: 0.5px;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    z-index: 10;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    /* Subtle shadow */
+}
+
+.developers-btn:hover {
+    background: rgba(35, 182, 219, 0.15);
+    /* Cyan tint on hover */
+    border-color: rgba(35, 182, 219, 0.4);
+    color: #fff;
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(35, 182, 219, 0.2);
+    /* Glow effect */
+}
+
+.developers-btn:active {
+    transform: translateY(0);
+}

@@ -135,9 +135,18 @@ const AttendanceCamera = () => {
             const res = await axios.post(`${API_BASE_URL}/attendance/mark`, formData, { headers: { 'Content-Type': 'multipart/form-data' } });
 
             const studentName = res.data.studentName || "Student";
+            const attendanceStatus = res.data.data?.status; // Present or Absent
+
             setDetectedName(studentName);
-            setStatus(`Verified: ${studentName}`);
-            setStatusType('success');
+
+            if (attendanceStatus === 'Absent') {
+                setStatus(`Marked Absent: Outside Location`);
+                setStatusType('warning');
+            } else {
+                setStatus(`Verified: ${studentName}`);
+                setStatusType('success');
+            }
+
             setTimeout(() => navigate('/dashboard'), 4000);
         } catch (error) {
             console.error(error);

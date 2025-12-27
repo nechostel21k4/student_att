@@ -14,6 +14,7 @@ const StudentIncharge = lazy(() => import('./pages/StudentIncharge'));
 const StudentComplaint = lazy(() => import('./pages/StudentComplaint'));
 const StudentRoomies = lazy(() => import('./pages/StudentRoomies'));
 const LastRequest = lazy(() => import('./pages/LastRequest'));
+const Developers = lazy(() => import('./pages/Developers'));
 
 const PermissionGuard = lazy(() => import('./components/PermissionGuard'));
 
@@ -34,6 +35,7 @@ function App() {
         <Routes>
           <Route path="/" element={<Login />} />
           <Route path="/register" element={<Register />} />
+          <Route path="/developers" element={<Developers />} />
 
           {/* Protected Routes with Navigation Layout */}
           <Route element={

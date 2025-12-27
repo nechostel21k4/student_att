@@ -2,8 +2,9 @@ import React, { useState } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import { API_BASE_URL } from '../config';
-import { ArrowRight, Lock, User, Eye, EyeOff } from 'lucide-react';
+import { ArrowRight, Lock, User, Eye, EyeOff, Code } from 'lucide-react';
 import toast, { Toaster } from 'react-hot-toast';
+import './Login.css'; // Import custom styles
 
 // Force refresh
 
@@ -58,37 +59,19 @@ const Login = () => {
     };
 
     return (
-        <div style={{
-            minHeight: '100vh', width: '100%',
-            display: 'flex', flexDirection: 'column',
-            alignItems: 'center', justifyContent: 'center',
-            position: 'relative', overflow: 'hidden',
-            background: 'var(--bg-gradient)',
-            padding: '20px' // Ensure padding on small screens
-        }}>
+        <div className="login-container">
             <Toaster position="top-center" reverseOrder={false} />
-            {/* Background Orbs - Hidden on very small screens to avoid clutter/overflow issues if any, but overflow hidden handles it. We'll adjust size/blur. */}
-            <div style={{ position: 'absolute', top: '-10%', left: '-10%', width: '50vw', height: '50vw', maxWidth: '400px', maxHeight: '400px', background: 'var(--primary)', filter: 'blur(100px)', opacity: 0.3, borderRadius: '50%' }}></div>
-            <div style={{ position: 'absolute', bottom: '-10%', right: '-10%', width: '50vw', height: '50vw', maxWidth: '350px', maxHeight: '350px', background: 'var(--secondary)', filter: 'blur(100px)', opacity: 0.3, borderRadius: '50%' }}></div>
+            {/* Background Orbs */}
+            <div className="login-bg-orb" style={{ top: '-10%', left: '-10%', background: 'var(--primary)' }}></div>
+            <div className="login-bg-orb" style={{ bottom: '-10%', right: '-10%', background: 'var(--secondary)' }}></div>
 
-            <div className="glass-card" style={{
-                width: '100%', maxWidth: '420px',
-                padding: 'clamp(24px, 5vw, 40px)', // Responsive padding
-                display: 'flex', flexDirection: 'column', gap: 'clamp(20px, 3vw, 32px)', // Responsive gap
-                zIndex: 1, margin: '0'
-            }}>
+            <div className="login-glass-card">
                 {/* Header */}
                 <div style={{ textAlign: 'center' }}>
-                    <div style={{
-                        width: '72px', height: '72px', borderRadius: '20px',
-                        background: 'white',
-                        display: 'flex', alignItems: 'center', justifyContent: 'center',
-                        margin: '0 auto 24px auto',
-                        boxShadow: '0 8px 32px rgba(0,0,0,0.2)'
-                    }}>
+                    <div className="login-logo-container">
                         <img src="/Nec.png" alt="Logo" style={{ width: '45px', height: '45px', objectFit: 'contain' }} />
                     </div>
-                    <h1 style={{ fontSize: 'clamp(1.5rem, 5vw, 2rem)', fontWeight: '800', margin: 0, color: 'white' }}>Welcome Back</h1>
+                    <h1 className="login-title">Welcome Back</h1>
                     <p style={{ color: 'var(--text-muted)', marginTop: '8px', fontSize: '0.95rem' }}>Sign in to access your portal</p>
                 </div>
 
@@ -138,8 +121,6 @@ const Login = () => {
                         </button>
                     </div>
 
-
-
                     <button
                         type="submit"
                         disabled={loading}
@@ -161,6 +142,15 @@ const Login = () => {
                 Don't have an account? <button onClick={() => navigate('/register')} style={{ background: 'none', border: 'none', padding: 0, font: 'inherit', color: 'var(--primary)', fontWeight: 'bold', cursor: 'pointer', textDecoration: 'underline' }}>Register Here</button>
             </p>
             <p style={{ color: 'rgba(255,255,255,0.3)', fontSize: '0.8rem', marginTop: '10px', textAlign: 'center' }}>Secure Campus Access System v2.0</p>
+
+            {/* Developers Button */}
+            <button
+                onClick={() => navigate('/developers')}
+                className="developers-btn"
+            >
+                <Code size={16} />
+                <span>Developers</span>
+            </button>
         </div>
     );
 };
