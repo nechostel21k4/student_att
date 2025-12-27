@@ -405,19 +405,36 @@
 @media (max-width: 768px) {
     .page-header {
         margin-top: 1rem;
-        padding-left: 4.5rem;
-        /* Space for button */
-        padding-right: 1rem;
-        text-align: left;
+        padding-left: 0;
+        /* Removed padding-left to center */
+        padding-right: 0;
+        text-align: center;
         display: flex;
+        justify-content: center;
+        /* Center content */
         align-items: center;
         min-height: 50px;
-        /* Ensure height for button */
+        position: relative;
     }
 
     .page-title {
         font-size: 1.4rem;
         line-height: 1.2;
+        width: 100%;
+        /* Ensure full width for text-align center */
+        text-align: center;
+        z-index: 1;
+        /* Ensure above background if any */
+    }
+
+    .back-btn {
+        width: 38px;
+        height: 38px;
+        left: 0.8rem;
+        /* Adjusted for mobile */
+        /* Keep absolute positioning */
+        z-index: 10;
+        /* Ensure clickable */
     }
 
 
