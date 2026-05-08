@@ -2,7 +2,7 @@ import React, { useEffect, useState, useRef } from 'react';
 import { Html5Qrcode } from 'html5-qrcode';
 import api from '../services/api';
 import toast from 'react-hot-toast';
-import { Utensils, CheckCircle, XCircle, Camera, RefreshCw, ChevronLeft, ChevronRight, ShieldCheck, Calendar, Clock, ArrowRight, LayoutGrid, X, Lock, SwitchCamera, ChevronDown, Play } from 'lucide-react';
+import { Utensils, CheckCircle, XCircle, Camera, RefreshCw, ChevronLeft, ChevronRight, ShieldCheck, Calendar, Clock, ArrowRight, LayoutGrid, X, Lock, SwitchCamera, ChevronDown, Play, Info } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useStudent } from '../context/StudentContext';
@@ -199,7 +199,7 @@ const FoodScanner: React.FC = () => {
                     <p style={{ color: 'rgba(255,255,255,0.6)', fontSize: '0.95rem', lineHeight: '1.6', marginBottom: '32px' }}>Only registered students with an active account can access the Meal Center. Please complete your profile registration first.</p>
                     <button 
                         onClick={() => navigate('/dashboard')}
-                        style={{ background: '#2563eb', color: 'white', border: 'none', padding: '16px 32px', borderRadius: '16px', fontWeight: '800', width: '100%' }}
+                        style={{ background: '#2563eb', color: 'white', border: 'none', padding: '12px 24px', borderRadius: '12px', fontWeight: '800', width: 'auto', fontSize: '0.85rem' }}
                     >
                         RETURN TO DASHBOARD
                     </button>
@@ -299,7 +299,7 @@ const FoodScanner: React.FC = () => {
                                     <div style={{ marginBottom: '24px' }}>{scanResult.success ? <CheckCircle size={90} color="#22c55e" strokeWidth={1.5} /> : <XCircle size={90} color="#ef4444" strokeWidth={1.5} />}</div>
                                     <h2 style={{ fontSize: '1.8rem', fontWeight: '900', marginBottom: '10px' }}>{scanResult.success ? 'Success!' : 'Scan Failed'}</h2>
                                     <p style={{ color: 'rgba(255,255,255,0.6)', marginBottom: '32px', fontSize: '1rem', fontWeight: '500' }}>{scanResult.message}</p>
-                                    <button onClick={() => { setScanResult(null); setIsCameraActive(true); }} style={{ background: '#2563eb', color: 'white', border: 'none', padding: '18px 50px', borderRadius: '20px', fontWeight: '900', fontSize: '1rem', boxShadow: '0 10px 25px rgba(37, 99, 235, 0.4)' }}>TRY AGAIN</button>
+                                    <button onClick={() => { setScanResult(null); setIsCameraActive(true); }} style={{ background: '#2563eb', color: 'white', border: 'none', padding: '14px 32px', borderRadius: '16px', fontWeight: '800', fontSize: '0.9rem', boxShadow: '0 8px 20px rgba(37, 99, 235, 0.3)' }}>Try Again</button>
                                 </div>
                             ) : isCameraActive ? (
                                 <>
@@ -308,7 +308,10 @@ const FoodScanner: React.FC = () => {
                                     {/* CAMERA DROPDOWN */}
                                     {cameras.length > 1 && (
                                         <div style={{ marginTop: '24px', textAlign: 'center', position: 'relative' }}>
-                                            <p style={{ fontSize: '0.7rem', color: 'rgba(255,255,255,0.3)', fontWeight: '800', letterSpacing: '2px', textTransform: 'uppercase', marginBottom: '12px' }}>Select Back Lens</p>
+                                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', marginBottom: '12px' }}>
+                                                <Info size={14} color="#2563eb" />
+                                                <p style={{ fontSize: '0.7rem', color: 'rgba(255,255,255,0.4)', fontWeight: '800', letterSpacing: '1px', textTransform: 'uppercase', margin: 0 }}>Choose correct lens in dropdown</p>
+                                            </div>
                                             <div style={{ position: 'relative', display: 'inline-block', width: '100%', maxWidth: '300px' }}>
                                                 <select className="custom-select" value={selectedCamIndex} onChange={(e) => setSelectedCamIndex(parseInt(e.target.value))}>
                                                     {cameras.map((cam, idx) => (
@@ -321,7 +324,7 @@ const FoodScanner: React.FC = () => {
                                     )}
 
                                     <div style={{ textAlign: 'center', marginTop: '40px' }}>
-                                        <button onClick={() => setIsCameraActive(false)} style={{ background: '#ef4444', color: 'white', border: 'none', padding: '16px 45px', borderRadius: '22px', fontWeight: '900', fontSize: '0.85rem', textTransform: 'uppercase', letterSpacing: '1px', boxShadow: '0 10px 25px rgba(239, 68, 68, 0.4)', width: '100%', maxWidth: '280px' }}>STOP SCANNING</button>
+                                        <button onClick={() => setIsCameraActive(false)} style={{ background: '#ef4444', color: 'white', border: 'none', padding: '12px 30px', borderRadius: '16px', fontWeight: '800', fontSize: '0.8rem', textTransform: 'uppercase', letterSpacing: '1px', boxShadow: '0 8px 20px rgba(239, 68, 68, 0.3)', width: 'auto', minWidth: '180px' }}>Stop Scanning</button>
                                     </div>
                                 </>
                             ) : (
@@ -337,14 +340,15 @@ const FoodScanner: React.FC = () => {
                                     <button 
                                         onClick={() => setIsCameraActive(true)}
                                         style={{ 
-                                            background: '#2563eb', color: 'white', border: 'none', padding: '18px 60px', 
-                                            borderRadius: '20px', fontWeight: '900', width: '100%', fontSize: '1rem',
-                                            boxShadow: '0 10px 30px rgba(37, 99, 235, 0.5)',
-                                            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '12px'
+                                            background: '#2563eb', color: 'white', border: 'none', padding: '14px 40px', 
+                                            borderRadius: '16px', fontWeight: '800', width: 'auto', fontSize: '0.9rem',
+                                            boxShadow: '0 8px 20px rgba(37, 99, 235, 0.3)',
+                                            display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '8px',
+                                            margin: '0 auto'
                                         }}
                                     >
-                                        <Play size={20} fill="currentColor" />
-                                        START SCANNER
+                                        <Camera size={18} />
+                                        Scan QR
                                     </button>
                                 </div>
                             )}
