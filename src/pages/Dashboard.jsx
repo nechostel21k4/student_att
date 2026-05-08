@@ -417,10 +417,10 @@ const Dashboard = () => {
                         <p style={{ color: '#FFFFFF', margin: '0 0 20px 0', fontSize: '14px', fontWeight: '500', opacity: 0.9 }}>We're here to assist you</p>
                         <button onClick={() => navigate('/incharge')}
                             style={{ 
-                                background: 'transparent', border: '1px solid rgba(255,255,255,0.2)',
-                                color: '#FFFFFF', height: '46px', borderRadius: '8px', fontSize: '14px', fontWeight: '600',
+                                background: 'transparent', border: 'none',
+                                color: '#FFFFFF', fontSize: '14px', fontWeight: '600',
                                 cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px',
-                                width: 'fit-content', padding: '0 24px'
+                                width: 'fit-content', padding: '0'
                             }}
                         >
                             Contact Warden <ChevronRight size={18} />
