@@ -324,7 +324,7 @@ const Dashboard = () => {
                     border: profileImageUrl ? '1.5px solid rgba(255,255,255,0.1)' : 'none',
                     boxShadow: '0 4px 12px rgba(0,0,0,0.2)'
                 }}>
-                    {profileImageUrl ? <img src={profileImageUrl} alt="Profile" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : (studentName ? studentName.charAt(0).toUpperCase() : 'S')}
+                    {profileImageUrl ? <img src={profileImageUrl} alt="Profile" style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'top' }} /> : (studentName ? studentName.charAt(0).toUpperCase() : 'S')}
                 </div>
                 <div>
                     <p style={{ color: '#FFFFFF', fontSize: '14px', marginBottom: '2px', fontWeight: '500', opacity: 0.9 }}>Welcome back,</p>
@@ -461,8 +461,9 @@ const Dashboard = () => {
                             Contact Warden <ChevronRight size={18} />
                         </button>
                     </div>
-                    <div style={{ position: 'absolute', right: '-15px', bottom: '-40px', width: '210px', height: '210px', zIndex: 1, display: 'flex', alignItems: 'flex-end', justifyContent: 'flex-end' }}>
-                        <img src="/help_char.webp" alt="Help Character" style={{ width: '100%', height: '100%', objectFit: 'contain', filter: 'drop-shadow(0 0 25px rgba(59, 130, 246, 0.2))' }} />
+                    <div style={{ position: 'absolute', right: '10px', bottom: '10px', width: '180px', height: '180px', background: 'radial-gradient(circle, rgba(168, 85, 247, 0.15) 0%, rgba(11, 18, 32, 0) 70%)', zIndex: 0, borderRadius: '50%' }}></div>
+                    <div style={{ position: 'absolute', right: '-15px', bottom: '-55px', width: '210px', height: '210px', zIndex: 1, display: 'flex', alignItems: 'flex-end', justifyContent: 'flex-end' }}>
+                        <img src="/help_char.webp" alt="Help Character" style={{ width: '100%', height: '100%', objectFit: 'contain', filter: 'drop-shadow(0 0 25px rgba(168, 85, 247, 0.35))' }} />
                     </div>
                 </div>
             </div>

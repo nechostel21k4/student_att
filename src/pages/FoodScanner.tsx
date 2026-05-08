@@ -26,6 +26,7 @@ const FoodScanner: React.FC = () => {
     const [scanResult, setScanResult] = useState<any>(null);
     const [todayStatus, setTodayStatus] = useState<any[]>([]);
     const [timings, setTimings] = useState<any[]>([]);
+    const [currentTime, setCurrentTime] = useState(new Date());
     const [isCameraActive, setIsCameraActive] = useState(false); // Manual start by default
     const [cameras, setCameras] = useState<any[]>([]);
     const [selectedCamIndex, setSelectedCamIndex] = useState(0);
@@ -45,6 +46,11 @@ const FoodScanner: React.FC = () => {
         // Initialize Audio
         successAudio.current = new Audio('/sounds/success.ogg');
         errorAudio.current = new Audio('/sounds/error.ogg');
+    }, []);
+
+    useEffect(() => {
+        const timer = setInterval(() => setCurrentTime(new Date()), 1000);
+        return () => clearInterval(timer);
     }, []);
 
     useEffect(() => {
@@ -295,11 +301,42 @@ const FoodScanner: React.FC = () => {
             `}</style>
 
             <div style={{ width: '100%', maxWidth: view === 'menu' ? '1280px' : '600px', transition: 'all 0.5s cubic-bezier(0.4, 0, 0.2, 1)', display: 'flex', flexDirection: 'column' }}>
-                {/* Header */}
-                <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', marginBottom: '32px' }}>
+                {/* Header & Digital Clock */}
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: '32px', gap: '16px' }}>
                     <div style={{ textAlign: 'center' }}>
                         <h1 style={{ fontSize: '2rem', fontWeight: '900', color: 'white', margin: 0, letterSpacing: '-1px' }}>Hostel Hub</h1>
                         <p style={{ fontSize: '0.75rem', color: '#2563eb', fontWeight: '900', letterSpacing: '3px', textTransform: 'uppercase', marginTop: '4px' }}>Meal Center</p>
+                    </div>
+
+                    {/* Creative Digital Clock */}
+                    <div style={{
+                        background: 'rgba(15, 23, 42, 0.6)',
+                        padding: '12px 24px',
+                        borderRadius: '20px',
+                        border: '1px solid rgba(59, 130, 246, 0.2)',
+                        boxShadow: '0 0 20px rgba(37, 99, 235, 0.1), inset 0 0 10px rgba(37, 99, 235, 0.05)',
+                        display: 'flex',
+                        alignItems: 'baseline',
+                        gap: '6px'
+                    }}>
+                        <span style={{ 
+                            fontSize: '2.2rem', 
+                            fontWeight: '900', 
+                            color: 'white', 
+                            fontFamily: "'JetBrains Mono', monospace",
+                            textShadow: '0 0 10px rgba(255,255,255,0.3)'
+                        }}>
+                            {currentTime.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true }).split(' ')[0]}
+                        </span>
+                        <span style={{ 
+                            fontSize: '1.2rem', 
+                            fontWeight: '900', 
+                            color: '#2563eb', 
+                            textTransform: 'uppercase',
+                            letterSpacing: '1px'
+                        }}>
+                            {currentTime.toLocaleTimeString('en-US', { hour12: true }).split(' ')[1]}
+                        </span>
                     </div>
                 </div>
 
@@ -411,34 +448,32 @@ const FoodScanner: React.FC = () => {
 
                                     return (
                                         <div key={m} style={{ 
-                                            padding: '20px 8px', 
+                                            padding: '16px 8px', 
                                             display: 'flex', 
                                             alignItems: 'center', 
                                             gap: '12px', 
                                             borderBottom: index !== meals.length - 1 ? '1px solid rgba(255,255,255,0.08)' : 'none',
-                                            background: isHighlighted ? 'rgba(59, 130, 246, 0.05)' : 'transparent',
-                                            borderRadius: isHighlighted ? '20px' : '0'
+                                            background: isHighlighted ? 'rgba(59, 130, 246, 0.08)' : 'transparent',
+                                            borderRadius: isHighlighted ? '24px' : '0',
+                                            boxShadow: isHighlighted ? '0 10px 25px -5px rgba(0,0,0,0.2)' : 'none'
                                         }}>
-                                            <div style={{ width: '44px', height: '44px', borderRadius: '12px', background: consumed ? 'rgba(34, 197, 94, 0.15)' : (isHighlighted ? 'rgba(59, 130, 246, 0.15)' : 'rgba(255,255,255,0.05)'), display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                                                {consumed ? <CheckCircle size={20} color="#22c55e" /> : (isHighlighted ? <div className="animate-pulse"><Utensils size={20} color="#3b82f6" /></div> : <Clock size={20} color="rgba(255,255,255,0.3)" />)}
-                                            </div>
                                             <div style={{ flex: 1, minWidth: 0 }}>
-                                                <h4 style={{ fontSize: '1.1rem', fontWeight: '800', textTransform: 'capitalize', margin: 0, color: isHighlighted ? '#3b82f6' : 'white' }}>{m}</h4>
-                                                <p style={{ fontSize: '0.8rem', color: 'rgba(255,255,255,0.4)', fontWeight: '600', marginTop: '2px', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{getFoodForDay(currentDayName, m)}</p>
-                                                {timing && <p style={{ fontSize: '0.7rem', color: isHighlighted ? '#60a5fa' : 'rgba(255,255,255,0.3)', fontWeight: '700', marginTop: '2px', textTransform: 'uppercase' }}>{format12Hour(timing.startTime)} - {format12Hour(timing.endTime)}</p>}
+                                                <h4 style={{ fontSize: '1.05rem', fontWeight: '800', textTransform: 'capitalize', margin: 0, color: isHighlighted ? '#60a5fa' : 'white', wordBreak: 'break-word', overflowWrap: 'anywhere' }}>{m}</h4>
+                                                <p style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.4)', fontWeight: '600', marginTop: '4px', margin: 0, lineHeight: '1.4', wordBreak: 'break-word', overflowWrap: 'anywhere' }}>{getFoodForDay(currentDayName, m)}</p>
+                                                {timing && <p style={{ fontSize: '0.65rem', color: isHighlighted ? '#3b82f6' : 'rgba(255,255,255,0.3)', fontWeight: '800', marginTop: '4px', textTransform: 'uppercase' }}>{format12Hour(timing.startTime)} - {format12Hour(timing.endTime)}</p>}
                                             </div>
                                             <div style={{ 
-                                                padding: '4px 10px', 
-                                                borderRadius: '100px', 
+                                                padding: '5px 12px', 
+                                                borderRadius: '12px', 
                                                 background: statusBg, 
                                                 color: statusColor, 
                                                 fontSize: '0.65rem', 
-                                                fontWeight: '900', 
+                                                fontWeight: '950', 
                                                 textTransform: 'uppercase', 
                                                 letterSpacing: '1px', 
-                                                border: `1px solid ${statusColor}33`,
+                                                border: `1px solid ${statusColor}44`,
                                                 flexShrink: 0,
-                                                whiteSpace: 'nowrap'
+                                                boxShadow: isHighlighted ? `0 0 15px ${statusColor}22` : 'none'
                                             }}>
                                                 {statusText}
                                             </div>
@@ -461,14 +496,11 @@ const FoodScanner: React.FC = () => {
                                 {meals.map((meal, index) => {
                                     const config = mealIcons[meal];
                                     return (
-                                        <div key={meal} style={{ padding: '24px 10px', display: 'flex', alignItems: 'center', gap: '24px', borderBottom: index !== meals.length - 1 ? '1px solid rgba(255,255,255,0.08)' : 'none' }}>
-                                            <div style={{ width: '56px', height: '56px', borderRadius: '18px', background: config.bg, display: 'flex', alignItems: 'center', justifyContent: 'center' }}><config.icon size={26} color={config.color} /></div>
-                                            <div style={{ flex: 1 }}>
-                                                <p style={{ fontSize: '0.8rem', fontWeight: '900', color: config.color, textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '4px' }}>
-                                                    {meal} {timings.find(t => t.mealType === meal) && `(${format12Hour(timings.find(t => t.mealType === meal).startTime)} - ${format12Hour(timings.find(t => t.mealType === meal).endTime)})`}
-                                                </p>
-                                                <h4 style={{ fontSize: '1.3rem', fontWeight: '800', color: 'white' }}>{getFoodForDay(selectedDay, meal)}</h4>
-                                            </div>
+                                        <div key={meal} style={{ padding: '20px 10px', borderBottom: index !== meals.length - 1 ? '1px solid rgba(255,255,255,0.08)' : 'none' }}>
+                                            <p style={{ fontSize: '0.8rem', fontWeight: '900', color: config.color, textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '6px' }}>
+                                                {meal} {timings.find(t => t.mealType === meal) && `(${format12Hour(timings.find(t => t.mealType === meal).startTime)} - ${format12Hour(timings.find(t => t.mealType === meal).endTime)})`}
+                                            </p>
+                                            <h4 style={{ fontSize: '1.2rem', fontWeight: '800', color: 'white', lineHeight: '1.4', overflowWrap: 'anywhere' }}>{getFoodForDay(selectedDay, meal)}</h4>
                                         </div>
                                     );
                                 })}
@@ -477,17 +509,17 @@ const FoodScanner: React.FC = () => {
 
                         {/* Elite Desktop Weekly Table */}
                         <div className="desktop-only">
-                            <div className="glass-card" style={{ padding: '0', overflow: 'hidden', border: '1px solid rgba(255,255,255,0.1)' }}>
-                                <table style={{ width: '100%', borderCollapse: 'collapse', tableLayout: 'fixed' }}>
+                            <div className="glass-card" style={{ padding: '0', overflowX: 'auto', border: '1px solid rgba(255,255,255,0.1)' }}>
+                                <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: '1000px' }}>
                                     <thead>
                                         <tr style={{ background: 'rgba(255,255,255,0.05)' }}>
-                                            <th style={{ width: '180px', padding: '30px', fontSize: '0.8rem', fontWeight: '900', color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '3px', borderBottom: '2px solid rgba(255,255,255,0.1)' }}>Timeline</th>
+                                            <th style={{ width: '200px', padding: '25px', fontSize: '0.8rem', fontWeight: '900', color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '3px', borderBottom: '2px solid rgba(255,255,255,0.1)', textAlign: 'left' }}>Timeline</th>
                                             {days.map(day => {
                                                 const isToday = day === currentDayName;
                                                 return (
-                                                    <th key={day} className={isToday ? 'today-highlight' : ''} style={{ padding: '30px 10px', fontSize: '0.9rem', fontWeight: '900', color: isToday ? '#2563eb' : 'white', textTransform: 'uppercase', letterSpacing: '2px', borderBottom: isToday ? '3px solid #2563eb' : '2px solid rgba(255,255,255,0.1)', textAlign: 'center', position: 'relative' }}>
+                                                    <th key={day} className={isToday ? 'today-highlight' : ''} style={{ padding: '25px 10px', fontSize: '0.9rem', fontWeight: '900', color: isToday ? '#2563eb' : 'white', textTransform: 'uppercase', letterSpacing: '2px', borderBottom: isToday ? '3px solid #2563eb' : '2px solid rgba(255,255,255,0.1)', textAlign: 'center', position: 'relative' }}>
                                                         {day.substring(0, 3)}
-                                                        {isToday && <div style={{ position: 'absolute', bottom: '10px', left: '50%', transform: 'translateX(-50%)', fontSize: '10px', color: '#2563eb' }}>TODAY</div>}
+                                                        {isToday && <div style={{ position: 'absolute', bottom: '6px', left: '50%', transform: 'translateX(-50%)', fontSize: '9px', color: '#2563eb' }}>TODAY</div>}
                                                     </th>
                                                 );
                                             })}
@@ -498,24 +530,36 @@ const FoodScanner: React.FC = () => {
                                             const config = mealIcons[meal];
                                             return (
                                                 <tr key={meal} style={{ borderBottom: mIdx !== meals.length - 1 ? '1px solid rgba(255,255,255,0.05)' : 'none' }}>
-                                                    <td style={{ padding: '30px', background: 'rgba(255,255,255,0.02)' }}>
-                                                        <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
-                                                            <div style={{ padding: '10px', background: config.bg, borderRadius: '12px' }}><config.icon size={20} color={config.color} /></div>
-                                                            <div>
-                                                                <span style={{ fontSize: '1.1rem', fontWeight: '900', textTransform: 'capitalize', display: 'block' }}>{meal}</span>
-                                                                {timings.find(t => t.mealType === meal) && (
-                                                                    <span style={{ fontSize: '0.7rem', color: 'rgba(255,255,255,0.4)', fontWeight: '700', textTransform: 'uppercase' }}>
-                                                                        {format12Hour(timings.find(t => t.mealType === meal).startTime)} - {format12Hour(timings.find(t => t.mealType === meal).endTime)}
-                                                                    </span>
-                                                                )}
-                                                            </div>
+                                                    <td style={{ padding: '20px 25px', background: 'rgba(255,255,255,0.01)' }}>
+                                                        <div>
+                                                            <span style={{ fontSize: '1rem', fontWeight: '900', textTransform: 'capitalize', display: 'block', color: config.color }}>{meal}</span>
+                                                            {timings.find(t => t.mealType === meal) && (
+                                                                <span style={{ fontSize: '0.65rem', color: 'rgba(255,255,255,0.4)', fontWeight: '700', textTransform: 'uppercase' }}>
+                                                                    {format12Hour(timings.find(t => t.mealType === meal).startTime)} - {format12Hour(timings.find(t => t.mealType === meal).endTime)}
+                                                                </span>
+                                                            )}
                                                         </div>
                                                     </td>
                                                     {days.map(day => {
                                                         const isToday = day === currentDayName;
                                                         return (
-                                                            <td key={day} className={isToday ? 'today-highlight' : ''} style={{ padding: '20px 10px', textAlign: 'center' }}>
-                                                                <div className="meal-pill" style={{ background: isToday ? 'rgba(37, 99, 235, 0.15)' : 'rgba(255,255,255,0.03)', border: isToday ? '1px solid rgba(37, 99, 235, 0.3)' : '1px solid rgba(255,255,255,0.05)', color: isToday ? 'white' : 'rgba(255,255,255,0.7)', minHeight: '60px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>{getFoodForDay(day, meal)}</div>
+                                                            <td key={day} className={isToday ? 'today-highlight' : ''} style={{ padding: '12px 6px', textAlign: 'center' }}>
+                                                                <div className="meal-pill" style={{ 
+                                                                    background: isToday ? 'rgba(37, 99, 235, 0.12)' : 'rgba(255,255,255,0.02)', 
+                                                                    border: isToday ? '1px solid rgba(37, 99, 235, 0.2)' : '1px solid rgba(255,255,255,0.05)', 
+                                                                    color: isToday ? 'white' : 'rgba(255,255,255,0.6)', 
+                                                                    minHeight: '80px', 
+                                                                    padding: '12px 8px',
+                                                                    display: 'flex', 
+                                                                    alignItems: 'center', 
+                                                                    justifyContent: 'center',
+                                                                    fontSize: '0.75rem',
+                                                                    lineHeight: '1.5',
+                                                                    overflowWrap: 'anywhere',
+                                                                    wordBreak: 'break-word'
+                                                                }}>
+                                                                    {getFoodForDay(day, meal)}
+                                                                </div>
                                                             </td>
                                                         );
                                                     })}
