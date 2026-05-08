@@ -307,7 +307,7 @@ const Dashboard = () => {
                 <div 
                     onClick={() => navigate('/food')}
                     style={{
-                        backgroundImage: `linear-gradient(rgba(0,0,0,0.4), rgba(0,0,0,0.6)), url("/foodbanner.png")`,
+                        backgroundImage: `linear-gradient(rgba(0,0,0,0.4), rgba(0,0,0,0.6)), url("/foodbanner.webp")`,
                         backgroundSize: 'cover',
                         backgroundPosition: 'center',
                         backdropFilter: 'blur(20px)', border: '1px solid rgba(255,255,255,0.1)',
