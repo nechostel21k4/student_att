@@ -30,7 +30,6 @@ const NavItem = ({ icon: Icon, label, active, onClick, danger, isSidebarExpanded
     </div>
 );
 
-// Haversine Formula
 const getDistanceFromLatLonInMeters = (lat1, lon1, lat2, lon2) => {
     const R = 6371e3; // metres
     const dLat = (lat2 - lat1) * Math.PI / 180;
@@ -42,6 +41,15 @@ const getDistanceFromLatLonInMeters = (lat1, lon1, lat2, lon2) => {
     const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
     const d = R * c; // in metres
     return d;
+};
+
+const format12Hour = (timeStr) => {
+    if (!timeStr) return '';
+    const [hours, minutes] = timeStr.split(':');
+    let h = parseInt(hours);
+    const ampm = h >= 12 ? 'PM' : 'AM';
+    h = h % 12 || 12;
+    return `${h}:${minutes} ${ampm}`;
 };
 
 const Dashboard = () => {
@@ -57,21 +65,44 @@ const Dashboard = () => {
     // Meal State
     const [currentMeal, setCurrentMeal] = useState({ type: 'Meal', icon: Utensils, greeting: 'Hungry?' });
 
+    const [allTimings, setAllTimings] = useState([]);
+
     useEffect(() => {
-        const updateMealContext = () => {
-            const hour = new Date().getHours();
-            if (hour >= 5 && hour < 11) {
-                setCurrentMeal({ type: 'Breakfast', icon: Coffee, greeting: 'Ready for Breakfast?' });
-            } else if (hour >= 11 && hour < 16) {
-                setCurrentMeal({ type: 'Lunch', icon: Soup, greeting: 'Time for Lunch!' });
-            } else if (hour >= 16 && hour < 19) {
-                setCurrentMeal({ type: 'Snacks', icon: Sandwich, greeting: 'Evening Snacks?' });
-            } else {
-                setCurrentMeal({ type: 'Dinner', icon: Pizza, greeting: 'Dinner is served!' });
+        const fetchTimings = async () => {
+            try {
+                const token = localStorage.getItem('studentToken');
+                const res = await axios.get(`${API_BASE_URL}/meal/active-meal`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                
+                if (res.data.success) {
+                    setAllTimings(res.data.allTimings);
+                    const active = res.data.active;
+                    
+                    const config = {
+                        breakfast: { icon: Coffee, greeting: 'Ready for Breakfast?' },
+                        lunch: { icon: Soup, greeting: 'Time for Lunch!' },
+                        snacks: { icon: Sandwich, greeting: 'Evening Snacks?' },
+                        dinner: { icon: Pizza, greeting: 'Dinner is served!' }
+                    };
+
+                    if (active) {
+                        setCurrentMeal({ 
+                            type: active.mealType.charAt(0).toUpperCase() + active.mealType.slice(1), 
+                            icon: config[active.mealType].icon, 
+                            greeting: config[active.mealType].greeting,
+                            timing: `${format12Hour(active.startTime)} - ${format12Hour(active.endTime)}`
+                        });
+                    } else {
+                        setCurrentMeal({ type: 'Meal', icon: Utensils, greeting: 'Hungry?', timing: 'Closed' });
+                    }
+                }
+            } catch (error) {
+                console.error("Failed to fetch meal timings", error);
             }
         };
-        updateMealContext();
-        const interval = setInterval(updateMealContext, 60000);
+        fetchTimings();
+        const interval = setInterval(fetchTimings, 60000);
         return () => clearInterval(interval);
     }, []);
 
@@ -320,10 +351,14 @@ const Dashboard = () => {
                     <div style={{ position: 'relative', zIndex: 2 }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
                             <currentMeal.icon size={16} color="#ff85c0" />
-                            <span style={{ fontSize: '11px', fontWeight: '900', color: '#ff85c0', letterSpacing: '2px', textTransform: 'uppercase' }}>{currentMeal.type} Active</span>
+                            <span style={{ fontSize: '11px', fontWeight: '900', color: '#ff85c0', letterSpacing: '2px', textTransform: 'uppercase' }}>
+                                {currentMeal.type} {currentMeal.timing && `(${currentMeal.timing})`}
+                            </span>
                         </div>
                         <h2 style={{ fontSize: '1.3rem', fontWeight: '900', color: '#FFFFFF', margin: 0, textShadow: '0 2px 10px rgba(0,0,0,0.5)' }}>{currentMeal.greeting}</h2>
-                        <p style={{ fontSize: '0.8rem', color: 'rgba(255,255,255,0.9)', marginTop: '2px', fontWeight: '600' }}>Tap to scan QR</p>
+                        <p style={{ fontSize: '0.8rem', color: 'rgba(255,255,255,0.9)', marginTop: '2px', fontWeight: '600' }}>
+                            {currentMeal.timing === 'Closed' ? 'Canteen is closed' : 'Tap to scan QR'}
+                        </p>
                     </div>
 
                     <div className="pulse-btn" style={{

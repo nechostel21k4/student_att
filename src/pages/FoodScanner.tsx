@@ -25,6 +25,7 @@ const FoodScanner: React.FC = () => {
     const [template, setTemplate] = useState<any[]>([]);
     const [scanResult, setScanResult] = useState<any>(null);
     const [todayStatus, setTodayStatus] = useState<any[]>([]);
+    const [timings, setTimings] = useState<any[]>([]);
     const [isCameraActive, setIsCameraActive] = useState(false); // Manual start by default
     const [cameras, setCameras] = useState<any[]>([]);
     const [selectedCamIndex, setSelectedCamIndex] = useState(0);
@@ -50,6 +51,7 @@ const FoodScanner: React.FC = () => {
         if (isRegistered) {
             fetchStatus();
             fetchTemplate();
+            fetchTimings();
         }
     }, [isRegistered]);
 
@@ -146,11 +148,27 @@ const FoodScanner: React.FC = () => {
         } catch (error) {}
     };
 
+    const fetchTimings = async () => {
+        try {
+            const res = await api.get('/meal/active-meal');
+            if (res.data.success) setTimings(res.data.allTimings);
+        } catch (error) {}
+    };
+
     const fetchStatus = async () => {
         try {
             const res = await api.get('/meal/today-status');
             if (res.data.success) setTodayStatus(res.data.consumed);
         } catch (error) {}
+    };
+
+    const format12Hour = (timeStr: string) => {
+        if (!timeStr) return '';
+        const [hours, minutes] = timeStr.split(':');
+        let h = parseInt(hours);
+        const ampm = h >= 12 ? 'PM' : 'AM';
+        h = h % 12 || 12;
+        return `${h}:${minutes} ${ampm}`;
     };
 
     const onScanSuccess = async (decodedText: string) => {
@@ -363,11 +381,67 @@ const FoodScanner: React.FC = () => {
                             <div style={{ display: 'flex', flexDirection: 'column' }}>
                                 {meals.map((m, index) => {
                                     const consumed = isConsumed(m);
+                                    const timing = timings.find(t => t.mealType === m);
+                                    
+                                    // Determine Status
+                                    const now = new Date();
+                                    const currentTimeStr = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+                                    
+                                    let statusText = "Pending";
+                                    let statusColor = "rgba(255,255,255,0.3)";
+                                    let statusBg = "rgba(255,255,255,0.05)";
+                                    let isHighlighted = false;
+
+                                    if (consumed) {
+                                        statusText = "Consumed";
+                                        statusColor = "#22c55e";
+                                        statusBg = "rgba(34, 197, 94, 0.12)";
+                                    } else if (timing) {
+                                        if (currentTimeStr >= timing.startTime && currentTimeStr <= timing.endTime) {
+                                            statusText = "Active Now";
+                                            statusColor = "#3b82f6";
+                                            statusBg = "rgba(59, 130, 246, 0.2)";
+                                            isHighlighted = true;
+                                        } else if (currentTimeStr > timing.endTime) {
+                                            statusText = "Time Over";
+                                            statusColor = "#ef4444";
+                                            statusBg = "rgba(239, 68, 68, 0.12)";
+                                        }
+                                    }
+
                                     return (
-                                        <div key={m} style={{ padding: '24px 10px', display: 'flex', alignItems: 'center', gap: '24px', borderBottom: index !== meals.length - 1 ? '1px solid rgba(255,255,255,0.08)' : 'none' }}>
-                                            <div style={{ width: '52px', height: '52px', borderRadius: '16px', background: consumed ? 'rgba(34, 197, 94, 0.15)' : 'rgba(255,255,255,0.05)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>{consumed ? <CheckCircle size={24} color="#22c55e" /> : <Clock size={24} color="rgba(255,255,255,0.3)" />}</div>
-                                            <div style={{ flex: 1 }}><h4 style={{ fontSize: '1.2rem', fontWeight: '800', textTransform: 'capitalize', margin: 0, color: 'white' }}>{m}</h4><p style={{ fontSize: '0.85rem', color: 'rgba(255,255,255,0.4)', fontWeight: '600', marginTop: '4px', margin: 0 }}>{getFoodForDay(currentDayName, m)}</p></div>
-                                            <div style={{ padding: '6px 14px', borderRadius: '100px', background: consumed ? 'rgba(34, 197, 94, 0.12)' : 'rgba(255,255,255,0.05)', color: consumed ? '#22c55e' : 'rgba(255,255,255,0.3)', fontSize: '0.7rem', fontWeight: '900', textTransform: 'uppercase', letterSpacing: '1px', border: consumed ? '1px solid rgba(34, 197, 94, 0.2)' : '1px solid rgba(255,255,255,0.05)' }}>{consumed ? 'Consumed' : 'Pending'}</div>
+                                        <div key={m} style={{ 
+                                            padding: '20px 8px', 
+                                            display: 'flex', 
+                                            alignItems: 'center', 
+                                            gap: '12px', 
+                                            borderBottom: index !== meals.length - 1 ? '1px solid rgba(255,255,255,0.08)' : 'none',
+                                            background: isHighlighted ? 'rgba(59, 130, 246, 0.05)' : 'transparent',
+                                            borderRadius: isHighlighted ? '20px' : '0'
+                                        }}>
+                                            <div style={{ width: '44px', height: '44px', borderRadius: '12px', background: consumed ? 'rgba(34, 197, 94, 0.15)' : (isHighlighted ? 'rgba(59, 130, 246, 0.15)' : 'rgba(255,255,255,0.05)'), display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                                                {consumed ? <CheckCircle size={20} color="#22c55e" /> : (isHighlighted ? <div className="animate-pulse"><Utensils size={20} color="#3b82f6" /></div> : <Clock size={20} color="rgba(255,255,255,0.3)" />)}
+                                            </div>
+                                            <div style={{ flex: 1, minWidth: 0 }}>
+                                                <h4 style={{ fontSize: '1.1rem', fontWeight: '800', textTransform: 'capitalize', margin: 0, color: isHighlighted ? '#3b82f6' : 'white' }}>{m}</h4>
+                                                <p style={{ fontSize: '0.8rem', color: 'rgba(255,255,255,0.4)', fontWeight: '600', marginTop: '2px', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{getFoodForDay(currentDayName, m)}</p>
+                                                {timing && <p style={{ fontSize: '0.7rem', color: isHighlighted ? '#60a5fa' : 'rgba(255,255,255,0.3)', fontWeight: '700', marginTop: '2px', textTransform: 'uppercase' }}>{format12Hour(timing.startTime)} - {format12Hour(timing.endTime)}</p>}
+                                            </div>
+                                            <div style={{ 
+                                                padding: '4px 10px', 
+                                                borderRadius: '100px', 
+                                                background: statusBg, 
+                                                color: statusColor, 
+                                                fontSize: '0.65rem', 
+                                                fontWeight: '900', 
+                                                textTransform: 'uppercase', 
+                                                letterSpacing: '1px', 
+                                                border: `1px solid ${statusColor}33`,
+                                                flexShrink: 0,
+                                                whiteSpace: 'nowrap'
+                                            }}>
+                                                {statusText}
+                                            </div>
                                         </div>
                                     );
                                 })}
@@ -389,7 +463,12 @@ const FoodScanner: React.FC = () => {
                                     return (
                                         <div key={meal} style={{ padding: '24px 10px', display: 'flex', alignItems: 'center', gap: '24px', borderBottom: index !== meals.length - 1 ? '1px solid rgba(255,255,255,0.08)' : 'none' }}>
                                             <div style={{ width: '56px', height: '56px', borderRadius: '18px', background: config.bg, display: 'flex', alignItems: 'center', justifyContent: 'center' }}><config.icon size={26} color={config.color} /></div>
-                                            <div style={{ flex: 1 }}><p style={{ fontSize: '0.8rem', fontWeight: '900', color: config.color, textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '4px' }}>{meal}</p><h4 style={{ fontSize: '1.3rem', fontWeight: '800', color: 'white' }}>{getFoodForDay(selectedDay, meal)}</h4></div>
+                                            <div style={{ flex: 1 }}>
+                                                <p style={{ fontSize: '0.8rem', fontWeight: '900', color: config.color, textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '4px' }}>
+                                                    {meal} {timings.find(t => t.mealType === meal) && `(${format12Hour(timings.find(t => t.mealType === meal).startTime)} - ${format12Hour(timings.find(t => t.mealType === meal).endTime)})`}
+                                                </p>
+                                                <h4 style={{ fontSize: '1.3rem', fontWeight: '800', color: 'white' }}>{getFoodForDay(selectedDay, meal)}</h4>
+                                            </div>
                                         </div>
                                     );
                                 })}
@@ -422,7 +501,14 @@ const FoodScanner: React.FC = () => {
                                                     <td style={{ padding: '30px', background: 'rgba(255,255,255,0.02)' }}>
                                                         <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
                                                             <div style={{ padding: '10px', background: config.bg, borderRadius: '12px' }}><config.icon size={20} color={config.color} /></div>
-                                                            <span style={{ fontSize: '1.1rem', fontWeight: '900', textTransform: 'capitalize' }}>{meal}</span>
+                                                            <div>
+                                                                <span style={{ fontSize: '1.1rem', fontWeight: '900', textTransform: 'capitalize', display: 'block' }}>{meal}</span>
+                                                                {timings.find(t => t.mealType === meal) && (
+                                                                    <span style={{ fontSize: '0.7rem', color: 'rgba(255,255,255,0.4)', fontWeight: '700', textTransform: 'uppercase' }}>
+                                                                        {format12Hour(timings.find(t => t.mealType === meal).startTime)} - {format12Hour(timings.find(t => t.mealType === meal).endTime)}
+                                                                    </span>
+                                                                )}
+                                                            </div>
                                                         </div>
                                                     </td>
                                                     {days.map(day => {
