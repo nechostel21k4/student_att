@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef } from 'react';
-import { Html5Qrcode } from 'html5-qrcode';
+import { Html5Qrcode, Html5QrcodeSupportedFormats } from 'html5-qrcode';
 import api from '../services/api';
 import toast from 'react-hot-toast';
 import { Utensils, CheckCircle, XCircle, Camera, RefreshCw, ChevronLeft, ChevronRight, ShieldCheck, Calendar, Clock, ArrowRight, LayoutGrid, X, Lock, SwitchCamera, ChevronDown, Play, Info } from 'lucide-react';
@@ -27,13 +27,15 @@ const FoodScanner: React.FC = () => {
     const [todayStatus, setTodayStatus] = useState<any[]>([]);
     const [timings, setTimings] = useState<any[]>([]);
     const [currentTime, setCurrentTime] = useState(new Date());
-    const [isCameraActive, setIsCameraActive] = useState(false); // Manual start by default
+    const [isCameraActive, setIsCameraActive] = useState(false);
+    const [isCameraLoading, setIsCameraLoading] = useState(false);
     const [cameras, setCameras] = useState<any[]>([]);
     const [selectedCamIndex, setSelectedCamIndex] = useState(0);
     const [selectedDay, setSelectedDay] = useState(new Date().toLocaleDateString('en-US', { weekday: 'long' }));
     
     const scannerRef = useRef<Html5Qrcode | null>(null);
     const startTimeoutRef = useRef<any>(null);
+    const isStoppingRef = useRef(false);
     
     // Audio Refs
     const successAudio = useRef<HTMLAudioElement | null>(null);
@@ -49,7 +51,10 @@ const FoodScanner: React.FC = () => {
     }, []);
 
     useEffect(() => {
-        const timer = setInterval(() => setCurrentTime(new Date()), 1000);
+        const timer = setInterval(() => {
+            const nowIST = new Date(new Date().toLocaleString("en-US", { timeZone: "Asia/Kolkata" }));
+            setCurrentTime(nowIST);
+        }, 1000);
         return () => clearInterval(timer);
     }, []);
 
@@ -93,13 +98,18 @@ const FoodScanner: React.FC = () => {
 
     // Sync camera state with lifecycle
     useEffect(() => {
-        if (view === 'scan' && !scanResult && isCameraActive && isRegistered) {
-            clearTimeout(startTimeoutRef.current);
-            startTimeoutRef.current = setTimeout(startScanner, 300);
-        } else {
-            clearTimeout(startTimeoutRef.current);
-            stopScanner();
-        }
+        const handleLifecycle = async () => {
+            if (view === 'scan' && !scanResult && isCameraActive && isRegistered) {
+                clearTimeout(startTimeoutRef.current);
+                startTimeoutRef.current = setTimeout(startScanner, 350);
+            } else {
+                clearTimeout(startTimeoutRef.current);
+                await stopScanner();
+            }
+        };
+
+        handleLifecycle();
+
         return () => { 
             clearTimeout(startTimeoutRef.current);
             stopScanner(); 
@@ -107,43 +117,84 @@ const FoodScanner: React.FC = () => {
     }, [view, scanResult, isCameraActive, isRegistered, selectedCamIndex, cameras]);
 
     const startScanner = async () => {
+        if (isStoppingRef.current) return;
+        setIsCameraLoading(true);
         try {
             const container = document.getElementById('reader');
-            if (!container) return;
-            if (!scannerRef.current) scannerRef.current = new Html5Qrcode("reader");
-            if (scannerRef.current.isScanning) await scannerRef.current.stop();
-
-            const config = { fps: 10, qrbox: { width: 280, height: 280 }, aspectRatio: 1.0 };
-            
-            if (cameras.length > 0 && cameras[selectedCamIndex]) {
-                await scannerRef.current.start(
-                    cameras[selectedCamIndex].id,
-                    config,
-                    onScanSuccess,
-                    () => {}
-                );
-            } else {
-                await scannerRef.current.start(
-                    { facingMode: "environment" },
-                    config,
-                    onScanSuccess,
-                    () => {}
-                );
+            if (!container) {
+                setIsCameraLoading(false);
+                return;
             }
+
+            // Ensure previous instance is fully cleared
+            if (scannerRef.current) {
+                try {
+                    if (scannerRef.current.isScanning) await scannerRef.current.stop();
+                    scannerRef.current.clear();
+                } catch (e) {}
+            }
+
+            scannerRef.current = new Html5Qrcode("reader");
+            const config = { 
+                fps: 30, 
+                qrbox: { width: 280, height: 280 }, 
+                formatsToSupport: [Html5QrcodeSupportedFormats.QR_CODE],
+                disableFlip: false
+            };
+            
+            const camToUse = (cameras.length > 0 && cameras[selectedCamIndex]) 
+                ? cameras[selectedCamIndex].id 
+                : { facingMode: "environment" };
+
+            await scannerRef.current.start(
+                camToUse,
+                config,
+                onScanSuccess,
+                () => {}
+            );
         } catch (err: any) {
             console.error("Scanner error:", err);
-            if (err.includes?.('transition')) {
+            // If it failed due to a race condition (already starting/stopping), retry once
+            if (err.includes?.('transition') || err.includes?.('starting')) {
                 clearTimeout(startTimeoutRef.current);
                 startTimeoutRef.current = setTimeout(startScanner, 500);
             }
+        } finally {
+            setIsCameraLoading(false);
         }
     };
 
     const stopScanner = async () => {
-        if (scannerRef.current && scannerRef.current.isScanning) {
-            try {
-                await scannerRef.current.stop();
-            } catch (err) {}
+        if (isStoppingRef.current) return;
+        isStoppingRef.current = true;
+        
+        try {
+            if (scannerRef.current) {
+                if (scannerRef.current.isScanning) {
+                    // Force a timeout for stop operation so it doesn't hang forever
+                    await Promise.race([
+                        scannerRef.current.stop(),
+                        new Promise((_, reject) => setTimeout(() => reject('Stop timeout'), 3000))
+                    ]).catch(e => console.warn("Stop timed out or failed:", e));
+                }
+                try {
+                    await scannerRef.current.clear();
+                } catch (e) {}
+            }
+        } catch (err) {
+            console.warn("Error stopping scanner:", err);
+        } finally {
+            // Aggressive DOM cleanup to prevent "ghost" video elements
+            const reader = document.getElementById('reader');
+            if (reader) {
+                try {
+                    reader.innerHTML = '';
+                    // Also check for any leaked video elements next to it (rare but happens with some libs)
+                    const videos = reader.parentElement?.querySelectorAll('video');
+                    videos?.forEach(v => v.remove());
+                } catch (e) {}
+            }
+            isStoppingRef.current = false;
         }
     };
 
@@ -210,7 +261,13 @@ const FoodScanner: React.FC = () => {
 
     const currentDayName = new Date().toLocaleDateString('en-US', { weekday: 'long' });
 
-    if (profileLoading) return null;
+    if (profileLoading) {
+        return (
+            <div style={{ width: '100%', height: '80vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <RefreshCw size={40} className="animate-spin" color="#2563eb" />
+            </div>
+        );
+    }
 
     if (!isRegistered) {
         return (
@@ -244,8 +301,43 @@ const FoodScanner: React.FC = () => {
             <style>{`
                 #reader__dashboard_section_csr > span { display: none !important; }
                 #reader__filescan_input { display: none !important; }
-                #reader video { object-fit: cover !important; border-radius: 32px !important; }
-                #reader { border: none !important; width: 100% !important; overflow: hidden !important; }
+                /* Ensure the main container is a perfect square */
+                #reader { 
+                    border: none !important; 
+                    width: 100% !important; 
+                    aspect-ratio: 1 / 1 !important;
+                    border-radius: 32px !important;
+                    overflow: hidden !important; 
+                    position: relative !important;
+                    background: #000 !important;
+                }
+                
+                /* Force the wrapper div created by html5-qrcode to fill the container */
+                #reader > div {
+                    width: 100% !important;
+                    height: 100% !important;
+                    border: none !important;
+                }
+
+                /* Make the video cover the entire area without black gaps */
+                #reader video { 
+                    width: 100% !important; 
+                    height: 100% !important; 
+                    object-fit: cover !important; 
+                    position: absolute !important;
+                    top: 0 !important;
+                    left: 0 !important;
+                }
+
+                /* Ensure the scanning region canvas sits perfectly on top */
+                #reader canvas {
+                    width: 100% !important;
+                    height: 100% !important;
+                    position: absolute !important;
+                    top: 0 !important;
+                    left: 0 !important;
+                    z-index: 2 !important;
+                }
                 .no-scrollbar::-webkit-scrollbar { display: none; }
                 .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
                 .glass-card {
@@ -356,55 +448,81 @@ const FoodScanner: React.FC = () => {
                                     <p style={{ color: 'rgba(255,255,255,0.6)', marginBottom: '32px', fontSize: '1rem', fontWeight: '500' }}>{scanResult.message}</p>
                                     <button onClick={() => { setScanResult(null); setIsCameraActive(true); }} style={{ background: '#2563eb', color: 'white', border: 'none', padding: '14px 32px', borderRadius: '16px', fontWeight: '800', fontSize: '0.9rem', boxShadow: '0 8px 20px rgba(37, 99, 235, 0.3)' }}>Try Again</button>
                                 </div>
-                            ) : isCameraActive ? (
-                                <>
-                                    <div id="reader" style={{ width: '100%', borderRadius: '32px', overflow: 'hidden', border: '2px solid rgba(255,255,255,0.1)', background: '#000' }}></div>
-                                    
-                                    {/* CAMERA DROPDOWN */}
-                                    {cameras.length > 1 && (
-                                        <div style={{ marginTop: '24px', textAlign: 'center', position: 'relative' }}>
-                                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', marginBottom: '12px' }}>
-                                                <Info size={14} color="#2563eb" />
-                                                <p style={{ fontSize: '0.7rem', color: 'rgba(255,255,255,0.4)', fontWeight: '800', letterSpacing: '1px', textTransform: 'uppercase', margin: 0 }}>Choose correct lens in dropdown</p>
+                            ) : (
+                                <div style={{ display: 'flex', flexDirection: 'column' }}>
+                                    {/* Unified Camera Container - Always in DOM to prevent lifecycle ghosting */}
+                                    <div 
+                                        style={{ 
+                                            display: (isCameraActive || isCameraLoading) ? 'block' : 'none',
+                                            width: '100%', 
+                                            aspectRatio: '1 / 1',
+                                            borderRadius: '32px', 
+                                            overflow: 'hidden', 
+                                            border: '2px solid rgba(255,255,255,0.1)', 
+                                            background: '#000',
+                                            position: 'relative'
+                                        }}
+                                    >
+                                        <div id="reader" style={{ width: '100%', height: '100%' }}></div>
+                                        {isCameraLoading && (
+                                            <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: 'rgba(255,255,255,0.5)', background: '#000', zIndex: 10 }}>
+                                                <RefreshCw size={30} className="animate-spin" style={{ marginBottom: '10px' }} />
+                                                <p style={{ fontSize: '0.8rem', fontWeight: '800' }}>INITIALIZING LENS...</p>
                                             </div>
-                                            <div style={{ position: 'relative', display: 'inline-block', width: '100%', maxWidth: '300px' }}>
-                                                <select className="custom-select" value={selectedCamIndex} onChange={(e) => setSelectedCamIndex(parseInt(e.target.value))}>
-                                                    {cameras.map((cam, idx) => (
-                                                        <option key={cam.id} value={idx} style={{ background: '#0f172a', color: 'white' }}>{idx === 0 ? 'Primary Camera' : `Lens ${idx + 1}`}</option>
-                                                    ))}
-                                                </select>
-                                                <ChevronDown size={16} style={{ position: 'absolute', right: '16px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', opacity: 0.5 }} />
+                                        )}
+                                    </div>
+
+                                    {/* Ready State UI */}
+                                    {!isCameraActive && !isCameraLoading && (
+                                        <div style={{ textAlign: 'center', padding: '40px 0' }}>
+                                            <div style={{ 
+                                                width: '110px', height: '110px', background: 'rgba(37, 99, 235, 0.1)', borderRadius: '40px', 
+                                                display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 35px' 
+                                            }}>
+                                                <Camera size={45} color="#2563eb" strokeWidth={1.5} />
                                             </div>
+                                            <h3 style={{ fontSize: '1.6rem', fontWeight: '900', marginBottom: '15px' }}>Ready to Scan?</h3>
+                                            <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: '1rem', marginBottom: '35px', maxWidth: '280px', margin: '0 auto 35px', lineHeight: '1.6' }}>Click the button below to turn on the camera and verify your meal.</p>
+                                            <button 
+                                                onClick={() => setIsCameraActive(true)}
+                                                style={{ 
+                                                    background: '#2563eb', color: 'white', border: 'none', padding: '14px 40px', 
+                                                    borderRadius: '16px', fontWeight: '800', width: 'auto', fontSize: '0.9rem',
+                                                    boxShadow: '0 8px 20px rgba(37, 99, 235, 0.3)',
+                                                    display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '8px',
+                                                    margin: '0 auto'
+                                                }}
+                                            >
+                                                <Camera size={18} />
+                                                Scan QR
+                                            </button>
                                         </div>
                                     )}
 
-                                    <div style={{ textAlign: 'center', marginTop: '40px' }}>
-                                        <button onClick={() => setIsCameraActive(false)} style={{ background: '#ef4444', color: 'white', border: 'none', padding: '12px 30px', borderRadius: '16px', fontWeight: '800', fontSize: '0.8rem', textTransform: 'uppercase', letterSpacing: '1px', boxShadow: '0 8px 20px rgba(239, 68, 68, 0.3)', width: 'auto', minWidth: '180px' }}>Stop Scanning</button>
-                                    </div>
-                                </>
-                            ) : (
-                                <div style={{ textAlign: 'center', padding: '40px 0' }}>
-                                    <div style={{ 
-                                        width: '110px', height: '110px', background: 'rgba(37, 99, 235, 0.1)', borderRadius: '40px', 
-                                        display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 35px' 
-                                    }}>
-                                        <Camera size={45} color="#2563eb" strokeWidth={1.5} />
-                                    </div>
-                                    <h3 style={{ fontSize: '1.6rem', fontWeight: '900', marginBottom: '15px' }}>Ready to Scan?</h3>
-                                    <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: '1rem', marginBottom: '35px', maxWidth: '280px', margin: '0 auto 35px', lineHeight: '1.6' }}>Click the button below to turn on the camera and verify your meal.</p>
-                                    <button 
-                                        onClick={() => setIsCameraActive(true)}
-                                        style={{ 
-                                            background: '#2563eb', color: 'white', border: 'none', padding: '14px 40px', 
-                                            borderRadius: '16px', fontWeight: '800', width: 'auto', fontSize: '0.9rem',
-                                            boxShadow: '0 8px 20px rgba(37, 99, 235, 0.3)',
-                                            display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '8px',
-                                            margin: '0 auto'
-                                        }}
-                                    >
-                                        <Camera size={18} />
-                                        Scan QR
-                                    </button>
+                                    {/* Active Camera Controls */}
+                                    {isCameraActive && (
+                                        <>
+                                            {cameras.length > 1 && (
+                                                <div style={{ marginTop: '24px', textAlign: 'center', position: 'relative' }}>
+                                                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', marginBottom: '12px' }}>
+                                                        <Info size={14} color="#2563eb" />
+                                                        <p style={{ fontSize: '0.7rem', color: 'rgba(255,255,255,0.4)', fontWeight: '800', letterSpacing: '1px', textTransform: 'uppercase', margin: 0 }}>Choose correct lens in dropdown</p>
+                                                    </div>
+                                                    <div style={{ position: 'relative', display: 'inline-block', width: '100%', maxWidth: '300px' }}>
+                                                        <select className="custom-select" value={selectedCamIndex} onChange={(e) => setSelectedCamIndex(parseInt(e.target.value))}>
+                                                            {cameras.map((cam, idx) => (
+                                                                <option key={cam.id} value={idx} style={{ background: '#0f172a', color: 'white' }}>{idx === 0 ? 'Primary Camera' : `Lens ${idx + 1}`}</option>
+                                                            ))}
+                                                        </select>
+                                                        <ChevronDown size={16} style={{ position: 'absolute', right: '16px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', opacity: 0.5 }} />
+                                                    </div>
+                                                </div>
+                                            )}
+                                            <div style={{ textAlign: 'center', marginTop: '40px' }}>
+                                                <button onClick={() => setIsCameraActive(false)} style={{ background: '#ef4444', color: 'white', border: 'none', padding: '12px 30px', borderRadius: '16px', fontWeight: '800', fontSize: '0.8rem', textTransform: 'uppercase', letterSpacing: '1px', boxShadow: '0 8px 20px rgba(239, 68, 68, 0.3)', width: 'auto', minWidth: '180px' }}>Stop Scanning</button>
+                                            </div>
+                                        </>
+                                    )}
                                 </div>
                             )}
                         </div>
@@ -420,8 +538,8 @@ const FoodScanner: React.FC = () => {
                                     const consumed = isConsumed(m);
                                     const timing = timings.find(t => t.mealType === m);
                                     
-                                    // Determine Status
-                                    const now = new Date();
+                                    // Determine Status using IST
+                                    const now = new Date(new Date().toLocaleString("en-US", { timeZone: "Asia/Kolkata" }));
                                     const currentTimeStr = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
                                     
                                     let statusText = "Pending";

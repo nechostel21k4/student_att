@@ -11,6 +11,7 @@ import {
 import axios from 'axios';
 import toast from 'react-hot-toast';
 import { useStudent } from '../context/StudentContext';
+import { getCachedImage } from '../services/imageDb';
 
 const NavItem = ({ icon: Icon, label, active, onClick, danger, isSidebarExpanded }) => (
     <div
@@ -147,18 +148,23 @@ const Dashboard = () => {
                 const hostelId = profile.hostelId;
                 
                 let hostelsData = [];
-                const cachedSchemas = localStorage.getItem('hostelsSchemaCache');
-                const schemaCacheTime = localStorage.getItem('hostelsSchemaCacheTime');
-                
-                if (cachedSchemas && schemaCacheTime && (Date.now() - parseInt(schemaCacheTime) < 86400000)) {
-                    hostelsData = JSON.parse(cachedSchemas);
-                } else {
+                const cachedSchemas = localStorage.getItem('hostelSchemasCache');
+                if (cachedSchemas) {
+                    const parsed = JSON.parse(cachedSchemas);
+                    if (Date.now() - parsed.timestamp < 1 * 60 * 60 * 1000) {
+                        hostelsData = parsed.data;
+                    }
+                }
+
+                if (hostelsData.length === 0) {
                     const schemasRes = await axios.get(`${API_BASE_URL}/schemas/getHostels`, {
                         headers: { 'Authorization': `Bearer ${token}` }
                     });
                     hostelsData = schemasRes.data.hostels;
-                    localStorage.setItem('hostelsSchemaCache', JSON.stringify(hostelsData));
-                    localStorage.setItem('hostelsSchemaCacheTime', Date.now().toString());
+                    localStorage.setItem('hostelSchemasCache', JSON.stringify({
+                        data: hostelsData,
+                        timestamp: Date.now()
+                    }));
                 }
 
                 const myHostel = hostelsData.find(h => h.code === hostelId);
@@ -166,12 +172,12 @@ const Dashboard = () => {
                 if (myHostel) {
                     const start = myHostel.attendanceStartTime || "00:00";
                     const end = myHostel.attendanceEndTime || "23:59";
-                    const now = new Date();
+                    const nowIST = new Date(new Date().toLocaleString("en-US", { timeZone: "Asia/Kolkata" }));
 
                     const updateDateWithTime = (timeStr) => {
                         if (!timeStr || typeof timeStr !== 'string' || !timeStr.includes(':')) return new Date();
                         const [h, m] = timeStr.split(':');
-                        const d = new Date();
+                        const d = new Date(new Date().toLocaleString("en-US", { timeZone: "Asia/Kolkata" }));
                         d.setHours(parseInt(h) || 0, parseInt(m) || 0, 0, 0);
                         return d;
                     };
@@ -179,7 +185,7 @@ const Dashboard = () => {
                     const startTime = updateDateWithTime(start);
                     const endTime = updateDateWithTime(end);
 
-                    if (now >= startTime && now <= endTime) {
+                    if (nowIST >= startTime && nowIST <= endTime) {
                         setIsTimeValid(true);
                         setTimeMsg("");
                     } else {
@@ -290,6 +296,24 @@ const Dashboard = () => {
         fetchMarquee();
     }, []);
 
+    useEffect(() => {
+        const loadImages = async () => {
+            const [banner, attend, help] = await Promise.all([
+                getCachedImage('/foodbanner.webp'),
+                getCachedImage('/attendance_banner.webp'),
+                getCachedImage('/help_char.webp')
+            ]);
+            setBannerUrl(banner);
+            setAttendUrl(attend);
+            setHelpUrl(help);
+        };
+        loadImages();
+    }, []);
+
+    const [bannerUrl, setBannerUrl] = useState('/foodbanner.webp');
+    const [attendUrl, setAttendUrl] = useState('/attendance_banner.webp');
+    const [helpUrl, setHelpUrl] = useState('/help_char.webp');
+
     return (
         <div style={{
             flex: 1, overflowY: 'auto', width: '100%', maxWidth: '1200px',
@@ -338,7 +362,7 @@ const Dashboard = () => {
                 <div 
                     onClick={() => navigate('/food')}
                     style={{
-                        backgroundImage: `linear-gradient(rgba(0,0,0,0.4), rgba(0,0,0,0.6)), url("/foodbanner.webp")`,
+                        backgroundImage: `linear-gradient(rgba(0,0,0,0.4), rgba(0,0,0,0.6)), url("${bannerUrl}")`,
                         backgroundSize: 'cover',
                         backgroundPosition: 'center',
                         backdropFilter: 'blur(20px)', border: '1px solid rgba(255,255,255,0.1)',
@@ -383,7 +407,7 @@ const Dashboard = () => {
                 }} style={{ cursor: 'pointer' }}>
                     <div className="checkin-card" style={{
                         backgroundColor: isAlreadyMarked ? '#064e3b' : '#1e293b',
-                        backgroundImage: `linear-gradient(rgba(0,0,0,0.3), rgba(0,0,0,0.3)), url("/attendance_banner.webp")`,
+                        backgroundImage: `linear-gradient(rgba(0,0,0,0.3), rgba(0,0,0,0.3)), url("${attendUrl}")`,
                         backgroundSize: 'cover', backgroundPosition: 'center',
                         borderRadius: '28px', padding: '24px', display: 'flex', flexDirection: 'column',
                         minHeight: '180px', marginBottom: '24px', position: 'relative', overflow: 'hidden',
@@ -463,7 +487,7 @@ const Dashboard = () => {
                     </div>
                     <div style={{ position: 'absolute', right: '10px', bottom: '10px', width: '180px', height: '180px', background: 'radial-gradient(circle, rgba(168, 85, 247, 0.15) 0%, rgba(11, 18, 32, 0) 70%)', zIndex: 0, borderRadius: '50%' }}></div>
                     <div style={{ position: 'absolute', right: '-15px', bottom: '-55px', width: '210px', height: '210px', zIndex: 1, display: 'flex', alignItems: 'flex-end', justifyContent: 'flex-end' }}>
-                        <img src="/help_char.webp" alt="Help Character" style={{ width: '100%', height: '100%', objectFit: 'contain', filter: 'drop-shadow(0 0 25px rgba(168, 85, 247, 0.35))' }} />
+                        <img src={helpUrl} alt="Help Character" style={{ width: '100%', height: '100%', objectFit: 'contain', filter: 'drop-shadow(0 0 25px rgba(168, 85, 247, 0.35))' }} />
                     </div>
                 </div>
             </div>

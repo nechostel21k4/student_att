@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { Camera, MapPin, AlertTriangle, ShieldCheck, RefreshCw, CheckCircle } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { getCachedImage } from '../services/imageDb';
 
 const PermissionGuard = ({ children }) => {
     const navigate = useNavigate();
@@ -10,6 +11,10 @@ const PermissionGuard = ({ children }) => {
         location: 'prompt'
     });
     const [loading, setLoading] = useState(true);
+    const [images, setImages] = useState({
+        geotag: '/geotag.webp',
+        facereq: '/facereq.webp'
+    });
 
     // ✅ SECURITY: Redirect to login if no valid session token exists
     const token = localStorage.getItem('studentToken');
@@ -41,21 +46,27 @@ const PermissionGuard = ({ children }) => {
             try {
                 // Feature detection for permissions API
                 if (navigator.permissions && navigator.permissions.query) {
-                    try {
-                        const camPermission = await navigator.permissions.query({ name: 'camera' });
-                        camStatus = camPermission.state;
-                        camPermission.onchange = () => {
-                            setPermissions(prev => ({ ...prev, camera: camPermission.state }));
-                        };
-                    } catch (e) { console.warn("Camera permission query not supported"); }
+                    // Use a timeout for the whole permission check block
+                    await Promise.race([
+                        (async () => {
+                            try {
+                                const camPermission = await navigator.permissions.query({ name: 'camera' });
+                                camStatus = camPermission.state;
+                                camPermission.onchange = () => {
+                                    setPermissions(prev => ({ ...prev, camera: camPermission.state }));
+                                };
+                            } catch (e) {}
 
-                    try {
-                        const locPermission = await navigator.permissions.query({ name: 'geolocation' });
-                        locStatus = locPermission.state;
-                        locPermission.onchange = () => {
-                            setPermissions(prev => ({ ...prev, location: locPermission.state }));
-                        };
-                    } catch (e) { console.warn("Geolocation permission query not supported"); }
+                            try {
+                                const locPermission = await navigator.permissions.query({ name: 'geolocation' });
+                                locStatus = locPermission.state;
+                                locPermission.onchange = () => {
+                                    setPermissions(prev => ({ ...prev, location: locPermission.state }));
+                                };
+                            } catch (e) {}
+                        })(),
+                        new Promise((_, reject) => setTimeout(() => reject('Timeout'), 2000))
+                    ]).catch(() => console.warn("Permission query timed out"));
                 }
             } catch (e) {
                 console.warn("Permissions API not supported", e);
@@ -66,13 +77,23 @@ const PermissionGuard = ({ children }) => {
         } catch (error) {
             console.error("Permission check failed", error);
         } finally {
-            // Ensure loading is always disabled, even if everything fails
             setLoading(false);
         }
     };
 
     useEffect(() => {
         checkPermissions();
+        
+        // Load cached images
+        const loadImages = async () => {
+            const geotagUrl = await getCachedImage('/geotag.webp');
+            const facereqUrl = await getCachedImage('/facereq.webp');
+            setImages({
+                geotag: geotagUrl,
+                facereq: facereqUrl
+            });
+        };
+        loadImages();
     }, []);
 
     const requestCamera = async () => {
@@ -130,7 +151,7 @@ const PermissionGuard = ({ children }) => {
     return (
         <div style={{
             minHeight: '100vh', width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-            background: 'var(--bg-gradient)', padding: '20px'
+            background: 'radial-gradient(circle at 50% 50%, #0f172a 0%, #05070f 100%)', padding: '20px'
         }}>
             <div style={{ textAlign: 'center', marginBottom: '32px' }}>
                 <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '16px' }}>
@@ -163,7 +184,7 @@ const PermissionGuard = ({ children }) => {
                     boxShadow: '0 10px 30px rgba(0,0,0,0.3)'
                 }}>
                     {/* Background Image */}
-                    <img src="/geotag.webp" alt="Location Required" style={{
+                    <img src={images.geotag} alt="Location Required" style={{
                         position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', objectFit: 'cover', zIndex: 0
                     }} />
                     
@@ -221,7 +242,7 @@ const PermissionGuard = ({ children }) => {
                     boxShadow: '0 10px 30px rgba(0,0,0,0.3)'
                 }}>
                     {/* Background Image */}
-                    <img src="/facereq.webp" alt="Camera Required" style={{
+                    <img src={images.facereq} alt="Camera Required" style={{
                         position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', objectFit: 'cover', zIndex: 0
                     }} />
                     

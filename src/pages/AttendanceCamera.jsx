@@ -24,6 +24,15 @@ const AttendanceCamera = () => {
     const [liveDetectionStatus, setLiveDetectionStatus] = useState('POSITION FACE IN FRAME');
     const [isFaceDetected, setIsFaceDetected] = useState(false);
 
+    const format12Hour = (timeStr) => {
+        if (!timeStr) return '--:--';
+        const [hours, minutes] = timeStr.split(':');
+        let h = parseInt(hours);
+        const ampm = h >= 12 ? 'PM' : 'AM';
+        h = h % 12 || 12;
+        return `${h}:${minutes} ${ampm}`;
+    };
+
     // 1. Load Models Dynamic Import
     useEffect(() => {
         const loadModels = async () => {
@@ -78,7 +87,7 @@ const AttendanceCamera = () => {
                     const cachedSchema = localStorage.getItem('hostelSchemasCache');
                     if (cachedSchema) {
                         const parsed = JSON.parse(cachedSchema);
-                        if (Date.now() - parsed.timestamp < 24 * 60 * 60 * 1000) {
+                        if (Date.now() - parsed.timestamp < 1 * 60 * 60 * 1000) { // 1 hour cache
                             schemas = parsed.data;
                         }
                     }
@@ -94,21 +103,27 @@ const AttendanceCamera = () => {
                         }));
                     }
 
-                    const myHostel = schemas.find(h => h.code === hostelId);
+                    const myHostel = schemas.find(h => h.code?.toLowerCase() === hostelId?.toLowerCase());
                     if (myHostel) {
-                        // Time Check
+                        // Time Check using IST
                         const start = myHostel.attendanceStartTime || "00:00";
                         const end = myHostel.attendanceEndTime || "23:59";
-                        const now = new Date();
+                        
+                        // Get current time in IST
+                        const nowIST = new Date(new Date().toLocaleString("en-US", { timeZone: "Asia/Kolkata" }));
+                        
                         const setTime = (tStr) => {
                             const [h, m] = tStr.split(':');
-                            const d = new Date();
+                            const d = new Date(new Date().toLocaleString("en-US", { timeZone: "Asia/Kolkata" }));
                             d.setHours(parseInt(h), parseInt(m), 0, 0);
                             return d;
                         };
 
-                        if (now < setTime(start) || now > setTime(end)) {
-                            toast.error(`Attendance is currently closed. Allowed from ${start} to ${end}.`);
+                        const startTimeDate = setTime(start);
+                        const endTimeDate = setTime(end);
+
+                        if (nowIST < startTimeDate || nowIST > endTimeDate) {
+                            toast.error(`Attendance is closed. Open: ${format12Hour(start)} - ${format12Hour(end)}`, { duration: 5000 });
                             navigate('/dashboard');
                             return;
                         }

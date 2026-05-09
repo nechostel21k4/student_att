@@ -39,7 +39,7 @@ const PageLoader = () => (
     overflow: 'hidden'
   }}>
     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '24px' }}>
-      <img src="/HostelX.png" alt="Logo" style={{ height: '80px', objectFit: 'contain' }} />
+      <img src="/HostelX.webp" alt="Logo" style={{ height: '80px', objectFit: 'contain' }} />
       <div style={{ 
           fontSize: '1.5rem', 
           fontWeight: '900', 
