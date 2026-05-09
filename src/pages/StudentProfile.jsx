@@ -208,22 +208,7 @@ const StudentProfile = () => {
     };
 
 
-    if (loading && !student) {
-        return (
-            <div style={{ height: '100vh', width: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', background: '#0f172a', gap: '20px' }}>
-                <motion.div
-                    animate={{ rotate: 360 }}
-                    transition={{ repeat: Infinity, duration: 1, ease: "linear" }}
-                    style={{ color: '#2563eb' }}
-                >
-                    <Loader size={40} />
-                </motion.div>
-                <div style={{ color: 'white', fontSize: '1rem', fontWeight: '600', letterSpacing: '1px' }}>SECURE LOADING...</div>
-            </div>
-        );
-    }
-
-    if (!student) return <div style={{ height: '100vh', width: '100%', display: 'flex', justifyContent: 'center', alignItems: 'center', color: 'white', background: '#0f172a' }}>Student not found</div>;
+    if (!student && !loading) return <div style={{ height: '100vh', width: '100%', display: 'flex', justifyContent: 'center', alignItems: 'center', color: 'white', background: '#0f172a' }}>Student not found</div>;
 
     return (
         <div style={{ width: '100%', display: 'flex', justifyContent: 'center', padding: '24px 16px 120px 16px' }}>
