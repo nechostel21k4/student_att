@@ -20,8 +20,8 @@ export default defineConfig({
         'shortcuts/complaint.webp',
       ],
       manifest: {
-        name: 'HostelX',
-        short_name: 'HostelX',
+        name: 'HostelX Student-NEC',
+        short_name: 'HostelX Student-NEC',
         description: 'Advanced Hostel Management System',
         version: '2.0.0',
         theme_color: '#0f172a',
