@@ -1,27 +1,40 @@
 import { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
 import { API_BASE_URL } from '../config';
+import { 
+    saveSecureProfile, 
+    getSecureProfile, 
+    clearStudentSession,
+    getToken,
+    getStudentId
+} from '../services/studentStorage';
 
 const StudentContext = createContext(null);
 
 export const useStudent = () => useContext(StudentContext);
 
 export const StudentProvider = ({ children }) => {
-    // Initialize profile solely from memory
-    const [profile, setProfile] = useState(null);
+    // Initialize profile from secure local storage to avoid "Student not found" on reload
+    const [profile, setProfile] = useState(() => getSecureProfile());
     
-    // Always start with loading true if there is a token, so we can fetch the profile
+    // If we have a profile in storage, we might still want to refresh it, 
+    // but we can start with loading=false if we already have data.
     const [loading, setLoading] = useState(() => {
-        return localStorage.getItem('studentToken') ? true : false;
+        const token = getToken();
+        const existingProfile = getSecureProfile();
+        // If we have a token but NO profile, we MUST load, so loading = true.
+        // If we have both, we can show existing data immediately (loading = false).
+        return (token && !existingProfile) ? true : false;
     });
 
     const updateProfileState = (newProfile) => {
         setProfile(newProfile);
+        saveSecureProfile(newProfile);
     };
 
     const loadProfile = useCallback(async () => {
-        const token = localStorage.getItem('studentToken');
-        const sid = localStorage.getItem('studentId');
+        const token = getToken();
+        const sid = getStudentId();
         if (!token || !sid) {
             setLoading(false);
             return;
@@ -39,21 +52,18 @@ export const StudentProvider = ({ children }) => {
             if (err.response?.status === 401) {
                 clearSession();
             }
-            // 404, 500, network errors: keep existing profile in memory
         } finally {
             setLoading(false);
         }
     }, []);
 
-    // Load profile when app starts (if token exists)
+    // Load profile when app starts
     useEffect(() => {
         loadProfile();
     }, [loadProfile]);
 
     const clearSession = () => {
-        localStorage.removeItem('studentToken');
-        localStorage.removeItem('studentId');
-        localStorage.removeItem('studentProfilePicCache');
+        clearStudentSession();
         setProfile(null);
     };
 
@@ -63,3 +73,4 @@ export const StudentProvider = ({ children }) => {
         </StudentContext.Provider>
     );
 };
+
