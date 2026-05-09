@@ -147,27 +147,19 @@ const Dashboard = () => {
 
                 const hostelId = profile.hostelId;
                 
-                let hostelsData = [];
-                const cachedSchemas = localStorage.getItem('hostelSchemasCache');
-                if (cachedSchemas) {
-                    const parsed = JSON.parse(cachedSchemas);
-                    if (Date.now() - parsed.timestamp < 1 * 60 * 60 * 1000) {
-                        hostelsData = parsed.data;
-                    }
-                }
-
-                if (hostelsData.length === 0) {
-                    const schemasRes = await axios.get(`${API_BASE_URL}/schemas/getHostels`, {
-                        headers: { 'Authorization': `Bearer ${token}` }
-                    });
-                    hostelsData = schemasRes.data.hostels;
+                // Fetch fresh hostel data for specifically THIS hostel (Optimized for Scalability & Load)
+                const schemasRes = await axios.get(`${API_BASE_URL}/schemas/getHostel/${hostelId}?t=${Date.now()}`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                const myHostel = schemasRes.data.hostel;
+                
+                // Update cache for offline fallback
+                if (myHostel) {
                     localStorage.setItem('hostelSchemasCache', JSON.stringify({
-                        data: hostelsData,
+                        data: [myHostel],
                         timestamp: Date.now()
                     }));
                 }
-
-                const myHostel = hostelsData.find(h => h.code === hostelId);
 
                 if (myHostel) {
                     const start = myHostel.attendanceStartTime || "00:00";
@@ -229,7 +221,12 @@ const Dashboard = () => {
             }
         };
 
-        if (profile) validateTimeAndFetchGeo();
+        if (profile) {
+            validateTimeAndFetchGeo();
+            // Background sync every 30 seconds to catch Admin changes instantly
+            const interval = setInterval(validateTimeAndFetchGeo, 30000);
+            return () => clearInterval(interval);
+        }
     }, [profile]);
 
     useEffect(() => {
@@ -255,14 +252,21 @@ const Dashboard = () => {
     useEffect(() => {
         if (!targetGeo) return;
         let watchId = null;
-        const options = { enableHighAccuracy: true, timeout: 5000, maximumAge: 0 };
+        const options = { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 };
         watchId = navigator.geolocation.watchPosition(
             (position) => {
                 const dist = getDistanceFromLatLonInMeters(position.coords.latitude, position.coords.longitude, targetGeo.latitude, targetGeo.longitude);
                 setCurrentDist(Math.floor(dist));
-                setIsLocationValid(dist <= targetGeo.radius);
+                
+                const radius = targetGeo.radius || 200;
+                setIsLocationValid(dist <= radius);
                 setGpsAccuracy(position.coords.accuracy);
-                setLocationMsg(""); 
+                
+                if (dist <= radius) {
+                    setLocationMsg("");
+                } else {
+                    setLocationMsg(`You are out of range (${Math.floor(dist)}m). Go closer to hostel.`);
+                }
             },
             (error) => {
                 setIsLocationValid(false);
@@ -401,8 +405,8 @@ const Dashboard = () => {
                 {/* Check-in Card */}
                 <div onClick={() => {
                     if (isAlreadyMarked) toast.success("Attendance already marked!");
-                    else if (!isTimeValid) toast.error(timeMsg);
-                    else if (!isLocationValid) toast.error(locationMsg);
+                    else if (!isTimeValid) toast.error(timeMsg || "Attendance is currently closed");
+                    else if (!isLocationValid) toast.error(locationMsg || "Please wait for location verification");
                     else navigate('/attendance');
                 }} style={{ cursor: 'pointer' }}>
                     <div className="checkin-card" style={{
