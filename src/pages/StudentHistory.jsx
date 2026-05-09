@@ -12,7 +12,7 @@ const StudentHistory = () => {
     const [page, setPage] = useState(1);
     const [hasMore, setHasMore] = useState(false);
     const [totalCount, setTotalCount] = useState(0);
-    const LIMIT = 10;
+    const LIMIT = 8;
 
     const { profile } = useStudent();
     const token = localStorage.getItem('studentToken');
@@ -112,9 +112,6 @@ const StudentHistory = () => {
                         <h1 className="page-title" style={{ fontSize: '1.75rem', fontWeight: 'bold', margin: 0, color: 'white' }}>History</h1>
                         <p className="page-subtitle" style={{ color: 'var(--text-muted)', marginTop: '4px', fontSize: '0.9rem' }}>Your past leave and permission requests</p>
                     </div>
-                    <button onClick={fetchHistory} className="refresh-btn" style={{ background: 'rgba(255,255,255,0.1)', border: 'none', borderRadius: '50%', width: '40px', height: '40px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white' }}>
-                        <RefreshCw size={20} />
-                    </button>
                 </div>
 
                 {loading ? (
@@ -193,26 +190,32 @@ const StudentHistory = () => {
                         ))}
                         
                         {hasMore && (
-                            <div style={{ padding: '20px', textAlign: 'center', borderTop: '1px solid rgba(255,255,255,0.05)' }}>
+                            <div style={{ padding: '24px 20px', textAlign: 'center', borderTop: '1px solid rgba(255,255,255,0.05)' }}>
                                 <button 
                                     onClick={() => fetchHistory(true)}
                                     style={{
                                         background: 'rgba(37, 99, 235, 0.1)',
                                         color: 'var(--primary)',
                                         border: '1px solid rgba(37, 99, 235, 0.2)',
-                                        padding: '10px 24px',
-                                        borderRadius: '12px',
-                                        fontSize: '0.9rem',
-                                        fontWeight: '600',
+                                        padding: '12px 32px',
+                                        borderRadius: '14px',
+                                        fontSize: '0.95rem',
+                                        fontWeight: '700',
                                         cursor: 'pointer',
-                                        display: 'inline-flex',
-                                        alignItems: 'center',
-                                        gap: '8px',
-                                        transition: 'all 0.2s ease'
+                                        transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
+                                        width: '100%',
+                                        maxWidth: '300px'
+                                    }}
+                                    onMouseOver={(e) => {
+                                        e.currentTarget.style.background = 'rgba(37, 99, 235, 0.15)';
+                                        e.currentTarget.style.transform = 'translateY(-1px)';
+                                    }}
+                                    onMouseOut={(e) => {
+                                        e.currentTarget.style.background = 'rgba(37, 99, 235, 0.1)';
+                                        e.currentTarget.style.transform = 'translateY(0)';
                                     }}
                                 >
-                                    <RefreshCw size={16} />
-                                    Load More History
+                                    SHOW MORE HISTORY
                                 </button>
                             </div>
                         )}
