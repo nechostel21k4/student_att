@@ -3,7 +3,7 @@ import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import {
     Building, CheckCircle, User, Phone, Mail, Hash, BookOpen,
-    Calendar, Users, LogOut, Camera, Edit2, Loader,
+    Calendar, Users, LogOut, Camera, Edit2,
     GraduationCap, Home, ShieldCheck, Activity
 } from 'lucide-react';
 import axios from 'axios';

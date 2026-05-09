@@ -57,28 +57,9 @@ export const StudentProvider = ({ children }) => {
         }
     }, []);
 
-    // Load profile and setup global interceptors
+    // Load profile when app starts
     useEffect(() => {
-        // Global 401 handler
-        const interceptor = axios.interceptors.response.use(
-            (response) => response,
-            (error) => {
-                if (error.response?.status === 401) {
-                    clearSession();
-                    // Don't redirect if we are on the public verification page
-                    if (!window.location.pathname.startsWith('/verify-request/')) {
-                        window.location.href = '/'; 
-                    }
-                }
-                return Promise.reject(error);
-            }
-        );
-
         loadProfile();
-
-        return () => {
-            axios.interceptors.response.eject(interceptor);
-        };
     }, [loadProfile]);
 
     const clearSession = () => {

@@ -188,10 +188,10 @@ const StudentHistory = () => {
                                 )}
                             </div>
                         ))}
-                        
+
                         {hasMore && (
                             <div style={{ padding: '24px 20px', textAlign: 'center', borderTop: '1px solid rgba(255,255,255,0.05)' }}>
-                                <button 
+                                <button
                                     onClick={() => fetchHistory(true)}
                                     style={{
                                         background: 'rgba(37, 99, 235, 0.1)',

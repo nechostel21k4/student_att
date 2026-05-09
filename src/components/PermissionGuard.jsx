@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { Camera, MapPin, AlertTriangle, ShieldCheck, RefreshCw, CheckCircle } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { getCachedImage } from '../services/imageDb';
+import PageLoader from './Shared/PageLoader';
 
 const PermissionGuard = ({ children }) => {
     const navigate = useNavigate();
@@ -123,23 +124,7 @@ const PermissionGuard = ({ children }) => {
     };
 
     if (loading || !token) {
-        return (
-            <div style={{
-                height: '100vh', width: '100%', display: 'flex', flexDirection: 'column',
-                alignItems: 'center', justifyContent: 'center', background: '#05070F', color: 'white',
-                padding: '40px'
-            }}>
-                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '24px' }}>
-                    <div style={{ 
-                        width: '40px', height: '40px', border: '3px solid rgba(37, 99, 235, 0.1)', 
-                        borderTopColor: '#2563eb', borderRadius: '50%',
-                        animation: 'spin 1s linear infinite'
-                    }} />
-                    <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
-                    <p style={{ color: 'rgba(255,255,255,0.4)', fontWeight: '600', fontSize: '0.9rem', letterSpacing: '1px' }}>VERIFYING PROTOCOLS</p>
-                </div>
-            </div>
-        );
+        return <PageLoader />;
     }
 
     const allGranted = permissions.camera === 'granted' && permissions.location === 'granted';
