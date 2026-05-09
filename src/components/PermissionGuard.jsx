@@ -122,21 +122,21 @@ const PermissionGuard = ({ children }) => {
         );
     };
 
-    if (loading) {
+    if (loading || !token) {
         return (
             <div style={{
                 height: '100vh', width: '100%', display: 'flex', flexDirection: 'column',
                 alignItems: 'center', justifyContent: 'center', background: '#05070F', color: 'white',
                 padding: '40px'
             }}>
-                <div className="skeleton" style={{ width: '80px', height: '80px', borderRadius: '50%', marginBottom: '24px' }}></div>
-                <div className="skeleton" style={{ width: '200px', height: '32px', borderRadius: '8px', marginBottom: '16px' }}></div>
-                <div className="skeleton" style={{ width: '100%', maxWidth: '300px', height: '16px', borderRadius: '4px', marginBottom: '8px' }}></div>
-                <div className="skeleton" style={{ width: '80%', maxWidth: '240px', height: '16px', borderRadius: '4px', marginBottom: '40px' }}></div>
-                
-                <div style={{ display: 'flex', gap: '20px', width: '100%', maxWidth: '600px' }}>
-                    <div className="skeleton" style={{ flex: 1, height: '200px', borderRadius: '24px' }}></div>
-                    <div className="skeleton" style={{ flex: 1, height: '200px', borderRadius: '24px' }}></div>
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '24px' }}>
+                    <div style={{ 
+                        width: '40px', height: '40px', border: '3px solid rgba(37, 99, 235, 0.1)', 
+                        borderTopColor: '#2563eb', borderRadius: '50%',
+                        animation: 'spin 1s linear infinite'
+                    }} />
+                    <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+                    <p style={{ color: 'rgba(255,255,255,0.4)', fontWeight: '600', fontSize: '0.9rem', letterSpacing: '1px' }}>VERIFYING PROTOCOLS</p>
                 </div>
             </div>
         );

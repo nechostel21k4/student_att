@@ -75,7 +75,10 @@ const ProfileSection = ({ title, icon: Icon, color, children }) => (
 const StudentProfile = () => {
     const navigate = useNavigate();
     const { profile: contextProfile, loading: contextLoading, loadProfile, clearSession } = useStudent();
-    const [student, setStudent] = useState(contextProfile || null);
+    
+    // Prioritize contextProfile but fallback to local state for internal updates
+    const [localStudent, setLocalStudent] = useState(null);
+    const student = localStudent || contextProfile;
     const [loading, setLoading] = useState(contextLoading || !contextProfile);
     const [showImagePreview, setShowImagePreview] = useState(false);
 
@@ -101,13 +104,14 @@ const StudentProfile = () => {
             navigate('/');
             return;
         }
+        
         if (contextProfile) {
-            setStudent(contextProfile);
             setLoading(false);
         }
+        
         fetchProfile();
         fetchProfileImage();
-    }, [navigate, imageKey]);
+    }, [navigate, imageKey, contextProfile, contextLoading]);
 
     const fetchProfile = async () => {
         try {
@@ -115,8 +119,8 @@ const StudentProfile = () => {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
             if (res.data.isExist) {
-                setStudent(res.data.hosteler);
-                loadProfile();
+                setLocalStudent(res.data.hosteler);
+                loadProfile(); // Also update context
             }
         } catch (err) {
             console.error("Failed to fetch profile", err.message);

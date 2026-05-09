@@ -5,17 +5,32 @@
 const _key = 0x58; // Secret key for XOR
 const encrypt = (str) => {
     if (!str) return null;
-    return btoa(str.split('').map(c => String.fromCharCode(c.charCodeAt(0) ^ _key)).join(''));
+    try {
+        // Handle Unicode characters correctly before btoa
+        const utf8 = unescape(encodeURIComponent(str));
+        const obfuscated = utf8.split('').map(c => String.fromCharCode(c.charCodeAt(0) ^ _key)).join('');
+        return btoa(obfuscated);
+    } catch (e) {
+        return null;
+    }
 };
 
 const decrypt = (encoded) => {
     if (!encoded) return null;
     try {
-        return atob(encoded).split('').map(c => String.fromCharCode(c.charCodeAt(0) ^ _key)).join('');
+        const decoded = atob(encoded).split('').map(c => String.fromCharCode(c.charCodeAt(0) ^ _key)).join('');
+        // Reverse Unicode handling with safety catch
+        try {
+            return decodeURIComponent(escape(decoded));
+        } catch (e) {
+            return decoded; // Fallback to raw decoded string if it's not UTF-8
+        }
     } catch (e) {
         return null;
     }
 };
+
+
 
 export const saveStudentSession = (token, rollNo) => {
     localStorage.setItem('studentToken', token);
