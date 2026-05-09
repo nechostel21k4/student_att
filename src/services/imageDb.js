@@ -28,11 +28,9 @@ export const getCachedImage = async (url) => {
         });
 
         if (blob) {
-            console.log(`[ImageCache] Loaded from LocalDB: ${url}`);
             return URL.createObjectURL(blob);
         }
 
-        console.log(`[ImageCache] Fetching and storing in LocalDB: ${url}`);
         const response = await fetch(url);
         const newBlob = await response.blob();
         
