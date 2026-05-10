@@ -220,6 +220,21 @@ const Login = () => {
                         Don't have an account? <button onClick={() => navigate('/register')} style={{ background: 'none', border: 'none', padding: 0, font: 'inherit', color: 'var(--primary)', fontWeight: 'bold', cursor: 'pointer', textDecoration: 'underline' }}>Register Here</button>
                     </p>
                     <p style={{ color: 'rgba(255,255,255,0.3)', fontSize: '0.8rem', marginTop: '16px' }}>Secure Campus Access System v2.0</p>
+                    <div style={{ marginTop: '12px' }}>
+                        <a 
+                            href="/privacy.html" 
+                            style={{ color: 'rgba(255,255,255,0.4)', fontSize: '0.8rem', textDecoration: 'none', borderBottom: '1px solid rgba(255,255,255,0.2)' }}
+                        >
+                            Privacy Policy
+                        </a>
+                        <span style={{ color: 'rgba(255,255,255,0.2)', margin: '0 8px' }}>•</span>
+                        <a 
+                            href="/terms.html" 
+                            style={{ color: 'rgba(255,255,255,0.4)', fontSize: '0.8rem', textDecoration: 'none', borderBottom: '1px solid rgba(255,255,255,0.2)' }}
+                        >
+                            Terms of Use
+                        </a>
+                    </div>
                 </div>
             </motion.div>
         </div>

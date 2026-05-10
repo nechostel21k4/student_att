@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Privacy Policy - HostelX</title>
+    <link rel="icon" type="image/png" href="/HostelX.png">
+    <link rel="manifest" href="/manifest.webmanifest">
+    <meta name="theme-color" content="#0f172a">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #0f172a;
+            --secondary: #2563eb;
+            --text-main: #1e293b;
+            --text-muted: #64748b;
+            --bg-light: #f8fafc;
+        }
+        body { 
+            font-family: 'Inter', -apple-system, sans-serif; 
+            line-height: 1.7; 
+            color: var(--text-main); 
+            margin: 0; 
+            padding: 0;
+            background-color: #fff;
+        }
+        .nav-header {
+            background-color: var(--primary);
+            color: white;
+            padding: 30px 20px;
+            margin-bottom: 60px;
+        }
+        .nav-content {
+            max-width: 800px;
+            margin: 0 auto;
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            justify-content: flex-start;
+            gap: 16px;
+        }
+        .logo { 
+            width: 50px; 
+            height: 50px; 
+            object-fit: contain; 
+        }
+        .brand-name { 
+            font-size: 1.8rem; 
+            font-weight: 700; 
+            letter-spacing: -0.025em;
+            margin: 0;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 0 24px 80px;
+        }
+        h1 { 
+            font-size: 2.25rem;
+            font-weight: 800;
+            color: var(--primary); 
+            margin-bottom: 12px;
+            letter-spacing: -0.05em;
+        }
+        .last-updated {
+            color: var(--text-muted);
+            font-size: 0.9rem;
+            margin-bottom: 40px;
+            display: block;
+        }
+        h2 { 
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--primary); 
+            margin-top: 48px; 
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        h2::before {
+            content: '';
+            width: 4px;
+            height: 24px;
+            background: var(--secondary);
+            border-radius: 2px;
+        }
+        p { margin-bottom: 1.5em; }
+        ul { 
+            margin-bottom: 2em; 
+            padding-left: 20px;
+            list-style-type: none;
+        }
+        li {
+            position: relative;
+            margin-bottom: 12px;
+            padding-left: 24px;
+        }
+        li::before {
+            content: "→";
+            position: absolute;
+            left: 0;
+            color: var(--secondary);
+            font-weight: bold;
+        }
+        .contact-card { 
+            margin-top: 64px;
+            background: var(--bg-light); 
+            padding: 32px; 
+            border-radius: 16px; 
+            border: 1px solid #e2e8f0; 
+        }
+        .contact-card h2 { margin-top: 0; }
+        .contact-card h2::before { display: none; }
+        .contact-link {
+            color: var(--secondary);
+            text-decoration: none;
+            font-weight: 600;
+        }
+        .contact-link:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <header class="nav-header">
+        <div class="nav-content">
+            <img src="/HostelX.png" alt="HostelX Logo" class="logo">
+            <p class="brand-name">HostelX</p>
+        </div>
+    </header>
+
+    <main class="container">
+        <h1>Privacy Policy</h1>
+        <span class="last-updated">Last updated: May 10, 2026</span>
+
+        <p>Welcome to <strong>HostelX</strong>. Your privacy is important to us. This Privacy Policy explains how we collect, use, and protect your information when you use our Student Application.</p>
+
+        <h2>1. Information We Collect</h2>
+        <p>To provide hostel management services, we collect the following types of information:</p>
+        <ul>
+            <li><strong>Personal Details:</strong> Name, Student ID, and contact information provided by your hostel administration.</li>
+        <li><strong>Facial Recognition Data:</strong> Used locally on your device for attendance verification. We do not store raw facial images on our servers; only encrypted mathematical representations (embeddings).</li>
+        <li><strong>Location Data:</strong> Used to verify your presence within the hostel geofence during attendance. We do not track your location in the background.</li>
+        <li><strong>Usage Data:</strong> Information about how you interact with the app (e.g., leave requests, complaints).</li>
+    </ul>
+
+    <h2>2. How We Use Your Information</h2>
+    <p>We use the collected data to:</p>
+    <ul>
+        <li>Facilitate automated attendance marking.</li>
+        <li>Process leave and out-pass requests.</li>
+        <li>Manage and track student complaints.</li>
+        <li>Ensure the security and safety of the hostel premises.</li>
+    </ul>
+
+    <h2>3. Data Security</h2>
+    <p>We implement industry-standard security measures to protect your data. All communication between the app and our servers is encrypted using SSL/TLS.</p>
+
+    <h2>4. Third-Party Services</h2>
+    <p>HostelX may use third-party services like Vercel for hosting and MongoDB for data storage. These services have their own privacy policies regarding data handling.</p>
+
+    <h2>5. Your Rights</h2>
+    <p>You have the right to access, correct, or request the deletion of your personal data. Please contact your hostel administrator or our support team for such requests.</p>
+
+        <div class="contact-card">
+            <h2>Contact Us</h2>
+            <p>If you have any questions about this Privacy Policy, you can contact us at:</p>
+            <p><strong>Email:</strong> <a href="mailto:devlantra.web@gmail.com" class="contact-link">devlantra.web@gmail.com</a></p>
+            <p><strong>Website:</strong> <a href="https://www.devlantra.in" target="_blank" rel="noopener noreferrer" class="contact-link">www.devlantra.in</a></p>
+        </div>
+    </main>
+</body>
+</html>
