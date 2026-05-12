@@ -13,6 +13,7 @@ const Register = () => {
     const [step, setStep] = useState(1); // 1: Validate, 2: Register
     const [rollNo, setRollNo] = useState('');
     const [studentData, setStudentData] = useState(null);
+    const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
     const [showPassword, setShowPassword] = useState(false);
@@ -39,6 +40,7 @@ const Register = () => {
                     setTimeout(() => navigate('/'), 2000);
                 } else {
                     setStudentData(hosteler);
+                    if (hosteler.email) setEmail(hosteler.email);
                     setStep(2);
                     toast.success("Validation Successful! Please set your password.");
                 }
@@ -57,6 +59,10 @@ const Register = () => {
     const handleRegister = async (e) => {
         e.preventDefault();
 
+        if (!email) {
+            toast.error("Email is required");
+            return;
+        }
         if (password !== confirmPassword) {
             toast.error("Passwords do not match!");
             return;
@@ -70,12 +76,13 @@ const Register = () => {
         try {
             const response = await axios.post(`${API_BASE_URL}/student-auth/register-student`, {
                 rollNo,
+                email,
                 hosteler: studentData,
                 password
             });
 
             if (response.data.success) {
-                toast.success("Register Successful! You have successfully registered into GOSAFE CAMPUS Hostel Portal");
+                toast.success("Register Successful! You have successfully registered into HostelX Portal");
                 setTimeout(() => navigate('/'), 2000);
             } else {
                 toast.error("Register Unsuccessful! Something went wrong. Try Again or Consult Hostel Admin");
@@ -159,6 +166,24 @@ const Register = () => {
                                 <span>{studentData.college}</span>
                             </div>
                         </div>
+
+                        {!studentData.email && (
+                            <div style={{ position: 'relative' }}>
+                                <div style={{ position: 'absolute', top: '50%', left: '16px', transform: 'translateY(-50%)', color: 'var(--text-muted)', display: 'flex' }}>
+                                    <User size={20} />
+                                </div>
+                                <input
+                                    type="email"
+                                    value={email}
+                                    onChange={(e) => setEmail(e.target.value)}
+                                    className="input-field"
+                                    placeholder="Personal Email Address"
+                                    aria-label="Email Address"
+                                    style={{ paddingLeft: '48px', marginBottom: '0' }}
+                                    required
+                                />
+                            </div>
+                        )}
 
                         <div style={{ position: 'relative' }}>
                             <div style={{ position: 'absolute', top: '50%', left: '16px', transform: 'translateY(-50%)', color: 'var(--text-muted)', display: 'flex' }}>

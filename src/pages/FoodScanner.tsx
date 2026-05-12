@@ -240,7 +240,13 @@ const FoodScanner: React.FC = () => {
             }
         } catch (error: any) {
             errorAudio.current?.play().catch(e => console.log("Audio block:", e));
-            const msg = error.response?.data?.message || "Scan failed";
+            let msg = error.response?.data?.message || "Scan failed";
+            if (msg.toLowerCase().includes("jwt") || msg.toLowerCase().includes("expire") || msg.toLowerCase().includes("malformed")) {
+                msg = "QR Code Expired or Invalid. Please ask the counter to refresh the QR.";
+            } else if (msg.toLowerCase().includes("already consumed")) {
+                msg = "Meal already taken for this session.";
+            }
+            
             setScanResult({ success: false, message: msg });
             toast.error(msg);
         }

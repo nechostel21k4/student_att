@@ -12,7 +12,7 @@
     align-items: center;
     justify-content: flex-end; /* Mobile: Bottom Sheet */
     overflow: hidden;
-    background: linear-gradient(to bottom, rgba(0, 0, 0, 0.16), rgba(0,0,0,0.95)), url('/login_banner.webp');
+    background: linear-gradient(to bottom, rgba(4, 7, 14, 0.2), #04070e), url('/login_banner.webp');
     background-size: cover;
     background-position: center;
     background-repeat: no-repeat;

@@ -35,7 +35,7 @@ const StudentLayout = () => {
     return (
         <div style={{
             position: 'fixed', inset: 0, width: '100%', height: '100dvh',
-            display: 'flex', overflow: 'hidden', background: '#05070F',
+            display: 'flex', overflow: 'hidden', background: '#04070e',
             fontFamily: "'Inter', 'Poppins', sans-serif"
         }}>
             {/* Background Glow */}
@@ -65,12 +65,12 @@ const StudentLayout = () => {
                 {/* Mobile Header */}
                 {!isDesktop && (
                     <div style={{
-                        height: '60px',
+                        height: 'calc(60px + env(safe-area-inset-top))',
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
-                        padding: '0 16px',
-                        backgroundColor: 'rgba(5, 7, 15, 0.8)',
+                        padding: 'env(safe-area-inset-top) 16px 0 16px',
+                        backgroundColor: 'rgba(4, 7, 14, 0.8)',
                         backdropFilter: 'blur(12px)',
                         WebkitBackdropFilter: 'blur(12px)',
                         borderBottom: '1px solid rgba(255,255,255,0.05)',

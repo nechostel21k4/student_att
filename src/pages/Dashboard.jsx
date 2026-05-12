@@ -1,8 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { Link, useNavigate, useOutletContext, useLocation } from 'react-router-dom';
+import { motion, AnimatePresence } from 'framer-motion';
 import { API_BASE_URL } from '../config';
 import { 
-    User, MapPin, Camera, LogOut, Activity, CheckCircle, Home, 
+    User, MapPin, LogOut, Activity, CheckCircle, Home, 
     Clock, Settings, ScanFace, PanelLeft, ArrowRight, FileText, 
     Users, Shield, AlertCircle, Megaphone, IndianRupee, ChevronRight, Utensils,
     Coffee, Soup, Sandwich, Pizza
@@ -402,32 +403,51 @@ const Dashboard = () => {
                     <Utensils size={120} style={{ position: 'absolute', right: '-20px', top: '-20px', color: 'white', opacity: 0.03, transform: 'rotate(-15deg)' }} />
                 </div>
 
-                {/* Check-in Card */}
+                {/* Check-in Card / Face Registration Card */}
                 <div onClick={() => {
-                    if (isAlreadyMarked) toast.success("Attendance already marked!");
+                    if (!isRegistered) navigate('/register-face');
+                    else if (isAlreadyMarked) toast.success("Attendance already marked!");
                     else if (!isTimeValid) toast.error(timeMsg || "Attendance is currently closed");
                     else if (!isLocationValid) toast.error(locationMsg || "Please wait for location verification");
                     else navigate('/attendance');
                 }} style={{ cursor: 'pointer' }}>
                     <div className="checkin-card" style={{
-                        backgroundColor: isAlreadyMarked ? '#064e3b' : '#1e293b',
-                        backgroundImage: `linear-gradient(rgba(0,0,0,0.3), rgba(0,0,0,0.3)), url("${attendUrl}")`,
+                        backgroundColor: !isRegistered ? '#1e1b4b' : isAlreadyMarked ? '#064e3b' : '#1e293b',
+                        backgroundImage: `linear-gradient(rgba(0,0,0,${!isRegistered ? 0.6 : 0.3}), rgba(0,0,0,${!isRegistered ? 0.7 : 0.3})), url("${attendUrl}")`,
                         backgroundSize: 'cover', backgroundPosition: 'center',
                         borderRadius: '28px', padding: '24px', display: 'flex', flexDirection: 'column',
                         minHeight: '180px', marginBottom: '24px', position: 'relative', overflow: 'hidden',
-                        boxShadow: '0 20px 50px -12px rgba(0,0,0,0.5)', border: isAlreadyMarked ? '2px solid rgba(16, 185, 129, 0.4)' : '1px solid rgba(255,255,255,0.06)'
+                        boxShadow: '0 20px 50px -12px rgba(0,0,0,0.5)', 
+                        border: !isRegistered ? '2px solid #6366f1' : isAlreadyMarked ? '2px solid rgba(16, 185, 129, 0.4)' : '1px solid rgba(255,255,255,0.06)'
                     }}>
-                        <div style={{ position: 'relative', zIndex: 1, height: '100%', display: 'flex', flexDirection: 'column' }}>
-                            <div style={{ background: isLocationValid ? 'rgba(34, 197, 94, 0.4)' : 'rgba(153, 27, 27, 0.6)', width: 'fit-content', padding: '6px 16px', borderRadius: '8px', display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px', border: '1px solid rgba(255,255,255,0.1)' }}>
-                                <MapPin size={14} color="white" />
-                                <span style={{ fontSize: '12px', fontWeight: '600', color: "#FFFFFF" }}>{targetGeo ? (isLocationValid ? "In Range" : "Out of Range") : "GPS Ignored"}</span>
-                            </div>
+                        <div style={{ position: 'relative', zIndex: 2, height: '100%', display: 'flex', flexDirection: 'column' }}>
+                            {!isRegistered ? (
+                                <div style={{ background: 'rgba(239, 68, 68, 0.2)', width: 'fit-content', padding: '6px 16px', borderRadius: '8px', display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px', border: '1px solid rgba(239, 68, 68, 0.3)' }}>
+                                    <ScanFace size={14} color="#fca5a5" />
+                                    <span style={{ fontSize: '12px', fontWeight: '800', color: "#fca5a5", letterSpacing: '1px' }}>ACTION REQUIRED</span>
+                                </div>
+                            ) : (
+                                <div style={{ background: isLocationValid ? 'rgba(34, 197, 94, 0.4)' : 'rgba(153, 27, 27, 0.6)', width: 'fit-content', padding: '6px 16px', borderRadius: '8px', display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px', border: '1px solid rgba(255,255,255,0.1)' }}>
+                                    <MapPin size={14} color="white" />
+                                    <span style={{ fontSize: '12px', fontWeight: '600', color: "#FFFFFF" }}>{targetGeo ? (isLocationValid ? "In Range" : "Out of Range") : "GPS Ignored"}</span>
+                                </div>
+                            )}
+
                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginTop: 'auto' }}>
                                 <div>
-                                    <h2 style={{ color: '#FFFFFF', margin: 0, fontSize: '2.2rem', fontWeight: '800' }}>{isAlreadyMarked ? "Done" : "Check-in"}</h2>
-                                    <p style={{ color: '#FFFFFF', margin: 0, fontSize: '1rem', fontWeight: '600', opacity: 0.95 }}>{isAlreadyMarked ? "Attendance Marked Successfully" : (!isTimeValid ? "Check-in closed" : "Take a photo to mark attendance")}</p>
+                                    <h2 style={{ color: '#FFFFFF', margin: 0, fontSize: '1.75rem', fontWeight: '800' }}>
+                                        {!isRegistered ? "Setup Face" : isAlreadyMarked ? "Done" : "Check-in"}
+                                    </h2>
+                                    <p style={{ color: '#FFFFFF', margin: 0, fontSize: '0.875rem', fontWeight: '600', opacity: 0.9 }}>
+                                        {!isRegistered ? "Register your face to start attendance" : isAlreadyMarked ? "Attendance Marked Successfully" : (!isTimeValid ? "Check-in closed" : "Take a photo to mark attendance")}
+                                    </p>
                                 </div>
-                                <div style={{ background: isAlreadyMarked ? '#10B981' : '#FFFFFF', borderRadius: '18px', width: '60px', height: '60px', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 8px 20px rgba(0,0,0,0.4)' }}>
+                                <div style={{ 
+                                    background: isAlreadyMarked ? '#10B981' : '#FFFFFF', 
+                                    borderRadius: '18px', width: '60px', height: '60px', 
+                                    display: isRegistered ? 'flex' : 'none', alignItems: 'center', justifyContent: 'center', 
+                                    boxShadow: '0 8px 20px rgba(0,0,0,0.4)' 
+                                }}>
                                     {isAlreadyMarked ? <CheckCircle size={32} color="white" /> : <ScanFace size={28} color="#1e293b" />}
                                 </div>
                             </div>

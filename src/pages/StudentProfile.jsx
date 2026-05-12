@@ -11,6 +11,7 @@ import toast from 'react-hot-toast';
 import { API_BASE_URL } from '../config';
 import { useStudent } from '../context/StudentContext';
 import Cropper from 'react-easy-crop';
+import ConfirmModal from '../components/ConfirmModal';
 
 // Helper function to extract cropped image blob
 const getCroppedImg = async (imageSrc, pixelCrop) => {
@@ -51,7 +52,7 @@ const ProfileItem = ({ label, value }) => (
         padding: '12px 0', borderBottom: '1px solid rgba(255,255,255,0.05)'
     }}>
         <div style={{ color: '#FFFFFF', fontSize: '0.85rem', fontWeight: '600', opacity: 0.9 }}>{label}</div>
-        <div style={{ color: '#FFFFFF', fontWeight: '700', fontSize: '0.9rem', textAlign: 'right' }}>{value || 'N/A'}</div>
+        <div style={{ color: value ? '#FFFFFF' : '#f87171', fontWeight: '700', fontSize: '0.9rem', textAlign: 'right' }}>{value || 'NOT SET'}</div>
     </div>
 );
 
@@ -105,13 +106,15 @@ const StudentProfile = () => {
             return;
         }
         
+        // Only set loading false if we already have context data
+        // but still allow fetchProfile to refresh it
         if (contextProfile) {
             setLoading(false);
         }
         
         fetchProfile();
         fetchProfileImage();
-    }, [navigate, imageKey, contextProfile, contextLoading]);
+    }, [navigate, imageKey]); // Removed contextProfile and contextLoading to prevent infinite loops
 
     const fetchProfile = async () => {
         try {
@@ -212,10 +215,12 @@ const StudentProfile = () => {
     };
 
 
-    if (!student && !loading) return <div style={{ height: '100vh', width: '100%', display: 'flex', justifyContent: 'center', alignItems: 'center', color: 'white', background: '#0f172a' }}>Student not found</div>;
+    const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
+
+    if (!student && !loading) return <div style={{ height: '100vh', width: '100%', display: 'flex', justifyContent: 'center', alignItems: 'center', color: 'white', background: '#04070e' }}>Student not found</div>;
 
     return (
-        <div style={{ width: '100%', display: 'flex', justifyContent: 'center', padding: '24px 16px 120px 16px' }}>
+        <div style={{ width: '100%', display: 'flex', justifyContent: 'center', padding: '16px 16px calc(100px + env(safe-area-inset-bottom)) 16px' }}>
             <div style={{ width: '100%', maxWidth: '600px', display: 'flex', flexDirection: 'column' }}>
 
                 {/* Status Bar */}
@@ -244,7 +249,7 @@ const StudentProfile = () => {
                     padding: '48px 32px', marginBottom: '24px', textAlign: 'center', position: 'relative',
                     overflow: 'hidden',
                     borderRadius: '32px',
-                    background: `linear-gradient(rgba(15, 23, 42, 0.4), rgba(15, 23, 42, 0.8)), url("/banner.webp") center/cover no-repeat`,
+                    background: `linear-gradient(rgba(4, 7, 14, 0.4), rgba(4, 7, 14, 0.9)), url("/banner.webp") center/cover no-repeat`,
                     border: '1px solid rgba(255,255,255,0.1)',
                     boxShadow: '0 20px 40px rgba(0,0,0,0.3)'
                 }}>
@@ -320,6 +325,15 @@ const StudentProfile = () => {
                                 }}>
                                     {student?.branch} • {student?.year} YEAR
                                 </div>
+                                {student?.email && (
+                                    <div style={{ 
+                                        marginTop: '12px', fontSize: '0.9rem', color: 'rgba(255,255,255,0.85)', 
+                                        fontWeight: '500', background: 'rgba(255,255,255,0.05)',
+                                        padding: '6px 16px', borderRadius: '20px', display: 'inline-block'
+                                    }}>
+                                        {student.email}
+                                    </div>
+                                )}
                             </>
                         )}
                     </div>
@@ -375,7 +389,7 @@ const StudentProfile = () => {
                 )}
 
                 <button
-                    onClick={() => { clearSession(); navigate('/'); }}
+                    onClick={() => setShowLogoutConfirm(true)}
                     style={{
                         width: '100%', height: '56px', borderRadius: '16px',
                         background: 'rgba(239, 68, 68, 0.1)', border: '1px solid rgba(239, 68, 68, 0.2)',
@@ -388,6 +402,17 @@ const StudentProfile = () => {
                 </button>
 
             </div>
+
+            {/* Logout Confirmation */}
+            <ConfirmModal 
+                isOpen={showLogoutConfirm}
+                onClose={() => setShowLogoutConfirm(false)}
+                onConfirm={() => { clearSession(); navigate('/'); }}
+                title="Sign Out"
+                message="Are you sure you want to sign out of your account?"
+                confirmText="Sign Out"
+                type="logout"
+            />
 
             {/* Image Preview */}
             {showImagePreview && (

@@ -3,9 +3,11 @@ import Webcam from 'react-webcam';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import { API_BASE_URL } from '../config';
-import { ArrowLeft, Camera, CheckCircle, AlertTriangle, ScanFace } from 'lucide-react';
+import { Camera, CheckCircle, AlertTriangle, ScanFace } from 'lucide-react';
+import { useStudent } from '../context/StudentContext';
 
 const RegisterFace = () => {
+    const { loadProfile } = useStudent();
     const webcamRef = useRef(null);
     const [capturing, setCapturing] = useState(false);
     const [message, setMessage] = useState('');
@@ -110,6 +112,7 @@ const RegisterFace = () => {
 
             setMessage('Face Registered Successfully!');
             setStatus('success');
+            await loadProfile();
             setTimeout(() => navigate('/dashboard'), 2000);
 
         } catch (error) {
@@ -121,30 +124,41 @@ const RegisterFace = () => {
     };
 
     return (
-        <div className="glass-card animate-fadeIn">
-            {/* Header */}
-            <div className="flex justify-between items-center mb-4">
-                <button onClick={() => navigate('/dashboard')} style={{ background: 'rgba(255,255,255,0.1)', border: 'none', color: 'white', padding: '8px', borderRadius: '50%', cursor: 'pointer', display: 'flex' }}>
-                    <ArrowLeft size={20} />
-                </button>
-                <h2 style={{ fontSize: '1.2rem', margin: 0 }}>Register Face</h2>
-                <div style={{ width: '36px' }}></div>
-            </div>
-
-            <div className="text-center mb-4">
-                <h3 style={{ margin: 0, fontSize: '1.2rem', textTransform: 'capitalize' }}>
+        <div className="animate-fadeIn" style={{ 
+            padding: '24px 16px', 
+            width: '100%', 
+            maxWidth: '500px', 
+            margin: '0 auto',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '16px'
+        }}>
+            {/* Unified Header */}
+            <div style={{ textAlign: 'center', marginBottom: '8px' }}>
+                <h2 style={{ fontSize: '1.5rem', fontWeight: '800', margin: '0 0 4px 0', color: 'white', letterSpacing: '-0.5px' }}>Register Face</h2>
+                <p style={{ margin: 0, fontSize: '0.9rem', color: 'rgba(255,255,255,0.6)', fontWeight: '600', textTransform: 'uppercase', letterSpacing: '1px' }}>
                     {localStorage.getItem('studentName') || localStorage.getItem('studentId')}
-                </h3>
+                </p>
             </div>
 
             {/* Camera / Image Container */}
-            <div className="webcam-container mb-4" style={{ height: '350px', background: 'black', borderRadius: '14px', overflow: 'hidden', position: 'relative' }}>
+            <div className="webcam-container" style={{ 
+                width: '100%', 
+                aspectRatio: '1/1', 
+                background: 'black', 
+                borderRadius: '32px', 
+                overflow: 'hidden', 
+                position: 'relative',
+                boxShadow: '0 20px 40px rgba(0,0,0,0.4)',
+                border: '2px solid rgba(255,255,255,0.05)'
+            }}>
                 {!capturedImage ? (
                     modelsLoaded ? (
                         <Webcam
                             audio={false}
                             ref={webcamRef}
                             screenshotFormat="image/jpeg"
+                            mirrored={true}
                             width="100%"
                             height="100%"
                             videoConstraints={{ facingMode: "user" }}
@@ -161,53 +175,58 @@ const RegisterFace = () => {
                 )}
             </div>
 
-            <p className="text-center" style={{ color: 'var(--text-muted)', marginBottom: '20px', fontSize: '0.9rem', padding: '0 10px' }}>
+            <p className="text-center" style={{ color: 'rgba(255,255,255,0.4)', fontSize: '0.875rem', padding: '0 10px', margin: 0 }}>
                 {!capturedImage ? "Ensure your face is clearly visible and well-lit." : "Review your photo. Ensure face is clear."}
             </p>
 
             {/* Status Message */}
             {message && (
-                <div className={`glass-card text-center mb-4 flex items-center justify-center gap-2`} style={{
-                    padding: '12px',
+                <div className="text-center flex items-center justify-center gap-2" style={{
+                    padding: '16px',
+                    borderRadius: '16px',
                     background: status === 'success' ? 'rgba(16, 185, 129, 0.1)' : 'rgba(239, 68, 68, 0.1)',
-                    border: `1px solid ${status === 'success' ? 'rgba(16, 185, 129, 0.3)' : 'rgba(239, 68, 68, 0.3)'}`
+                    border: `1px solid ${status === 'success' ? 'rgba(16, 185, 129, 0.2)' : 'rgba(239, 68, 68, 0.2)'}`,
+                    color: status === 'success' ? '#6ee7b7' : '#fca5a5',
+                    fontWeight: '600'
                 }}>
-                    {status === 'success' ? <CheckCircle size={18} color="#6ee7b7" /> : <AlertTriangle size={18} color="#fca5a5" />}
+                    {status === 'success' ? <CheckCircle size={18} /> : <AlertTriangle size={18} />}
                     <span>{message}</span>
                 </div>
             )}
 
             {/* Controls */}
-            {!capturedImage ? (
-                <button
-                    onClick={handleCapture}
-                    disabled={!modelsLoaded}
-                    className="btn btn-primary"
-                    style={{ height: '56px', fontSize: '1.1rem', width: '100%', opacity: modelsLoaded ? 1 : 0.7 }}
-                >
-                    <Camera size={20} />
-                    {modelsLoaded ? 'Capture Photo' : 'Loading...'}
-                </button>
-            ) : (
-                <div className="flex gap-3">
+            <div style={{ marginTop: 'auto', width: '100%' }}>
+                {!capturedImage ? (
                     <button
-                        onClick={handleRetake}
-                        disabled={capturing}
-                        className="btn"
-                        style={{ flex: 1, height: '56px', background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.2)' }}
-                    >
-                        Retake
-                    </button>
-                    <button
-                        onClick={registerFace}
-                        disabled={capturing}
+                        onClick={handleCapture}
+                        disabled={!modelsLoaded}
                         className="btn btn-primary"
-                        style={{ flex: 1, height: '56px' }}
+                        style={{ height: '56px', fontSize: '1.1rem', width: '100%', opacity: modelsLoaded ? 1 : 0.7, borderRadius: '16px' }}
                     >
-                        {capturing ? 'Register' : 'Confirm & Register'}
+                        <Camera size={20} />
+                        {modelsLoaded ? 'Capture Photo' : 'Loading...'}
                     </button>
-                </div>
-            )}
+                ) : (
+                    <div className="flex gap-3" style={{ width: '100%' }}>
+                        <button
+                            onClick={handleRetake}
+                            disabled={capturing}
+                            className="btn"
+                            style={{ flex: 1, height: '56px', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', color: 'white', borderRadius: '16px' }}
+                        >
+                            Retake
+                        </button>
+                        <button
+                            onClick={registerFace}
+                            disabled={capturing}
+                            className="btn btn-primary"
+                            style={{ flex: 1, height: '56px', borderRadius: '16px' }}
+                        >
+                            {capturing ? 'Registering...' : 'Confirm'}
+                        </button>
+                    </div>
+                )}
+            </div>
         </div>
     );
 };

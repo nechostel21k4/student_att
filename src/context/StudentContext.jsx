@@ -48,8 +48,8 @@ export const StudentProvider = ({ children }) => {
                 updateProfileState(res.data.hosteler);
             }
         } catch (err) {
-            // Only clear session on auth failure — ignore network errors silently
-            if (err.response?.status === 401) {
+            // ✅ AUTO-KICKOUT: If student is deleted (404) or session expired (401)
+            if (err.response?.status === 404 || err.response?.status === 401) {
                 clearSession();
             }
         } finally {
@@ -57,9 +57,25 @@ export const StudentProvider = ({ children }) => {
         }
     }, []);
 
-    // Load profile when app starts
+    // Load profile when app starts and handle instant kickout via interceptor
     useEffect(() => {
         loadProfile();
+        
+        // ✅ INSTANT KICKOUT: Global Interceptor
+        // This handles "navigating pages" because any page data fetch will trigger this if the user is deleted
+        const interceptor = axios.interceptors.response.use(
+            (response) => response,
+            (error) => {
+                if (error.response?.status === 401 || error.response?.status === 404) {
+                    clearSession();
+                }
+                return Promise.reject(error);
+            }
+        );
+
+        return () => {
+            axios.interceptors.response.eject(interceptor);
+        };
     }, [loadProfile]);
 
     const clearSession = () => {

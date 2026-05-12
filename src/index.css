@@ -12,6 +12,8 @@
   --error: #ef4444;
   --warning: #f59e0b;
   --radius: 16px;
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
 }
 
 * {
@@ -39,15 +41,21 @@ input, textarea {
   -webkit-user-select: text !important;
 }
 
+html {
+  height: -webkit-fill-available;
+  background: #04070e;
+}
+
 html, body {
   overscroll-behavior-y: none; /* Strictly disable native pull-to-refresh */
 }
 
 body {
   font-family: 'Outfit', sans-serif;
-  background: #000;
+  background: #04070e;
   color: var(--text-main);
   min-height: 100vh;
+  min-height: -webkit-fill-available;
   margin: 0;
   display: block;
 }

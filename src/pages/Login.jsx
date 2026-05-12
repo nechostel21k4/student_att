@@ -90,7 +90,7 @@ const Login = () => {
             {/* Marquee Strip */}
             {marquee.isEnabled && marquee.text && (
                 <div style={{
-                    position: 'absolute', top: 0, left: 0, width: '100%',
+                    position: 'absolute', top: 'env(safe-area-inset-top, 0px)', left: 0, width: '100%',
                     color: '#cad5f5ff', padding: '12px 0', zIndex: 1000,
                     fontWeight: 'bold', fontSize: '1rem', overflow: 'hidden',
                     display: 'flex', userSelect: 'none',
