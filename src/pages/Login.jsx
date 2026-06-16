@@ -6,7 +6,7 @@ import { ArrowRight, Lock, User, Eye, EyeOff, Loader } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { motion } from 'framer-motion';
 import './Login.css';
-import { saveStudentSession } from '../services/studentStorage';
+import { saveStudentSession, getToken } from '../services/studentStorage';
 import { useStudent } from '../context/StudentContext';
 
 const Login = () => {
@@ -19,7 +19,7 @@ const Login = () => {
     const [marquee, setMarquee] = useState({ text: '', isEnabled: false });
 
     useEffect(() => {
-        const token = localStorage.getItem('studentToken');
+        const token = getToken();
         if (token) { navigate('/dashboard'); }
     }, [navigate]);
 

@@ -4,6 +4,7 @@ import axios from 'axios';
 import { Calendar, Clock, FileText, CheckCircle, XCircle, AlertCircle, RefreshCw } from 'lucide-react';
 import { API_BASE_URL } from '../config';
 import { useStudent } from '../context/StudentContext';
+import { getToken, getStudentId } from '../services/studentStorage';
 
 const StudentHistory = () => {
     const navigate = useNavigate();
@@ -15,8 +16,8 @@ const StudentHistory = () => {
     const LIMIT = 8;
 
     const { profile } = useStudent();
-    const token = localStorage.getItem('studentToken');
-    const sid = localStorage.getItem('studentId');
+    const token = getToken();
+    const sid = getStudentId();
 
     useEffect(() => {
         if (!token || !sid) {

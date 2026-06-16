@@ -4,6 +4,8 @@ import { useStudent } from '../context/StudentContext';
 import DesktopSidebar from './Navigation/DesktopSidebar';
 import MobileNav from './Navigation/MobileNav';
 
+import { getToken } from '../services/studentStorage';
+
 const StudentLayout = () => {
     const navigate = useNavigate();
     const { clearSession } = useStudent();
@@ -16,7 +18,7 @@ const StudentLayout = () => {
         return () => window.removeEventListener('resize', handleResize);
     }, []);
 
-    const token = localStorage.getItem('studentToken');
+    const token = getToken();
     useEffect(() => {
         if (!token) { navigate('/', { replace: true }); }
     }, [token, navigate]);

@@ -33,8 +33,8 @@ const decrypt = (encoded) => {
 
 
 export const saveStudentSession = (token, rollNo) => {
-    localStorage.setItem('studentToken', token);
-    localStorage.setItem('studentId', rollNo);
+    localStorage.setItem('studentToken', encrypt(token));
+    localStorage.setItem('studentId', encrypt(rollNo));
 };
 
 export const saveSecureProfile = (profile) => {
@@ -58,8 +58,18 @@ export const clearStudentSession = () => {
     localStorage.removeItem('studentId');
     localStorage.removeItem('student_p_secure');
     localStorage.removeItem('studentProfilePicCache');
+    localStorage.removeItem('hostelSchemasCache');
+    localStorage.removeItem('last_attendance_date');
+    sessionStorage.removeItem('marqueeCache');
 };
 
-export const getToken = () => localStorage.getItem('studentToken');
-export const getStudentId = () => localStorage.getItem('studentId');
+export const getToken = () => {
+    const token = localStorage.getItem('studentToken');
+    return token ? decrypt(token) : null;
+};
+
+export const getStudentId = () => {
+    const id = localStorage.getItem('studentId');
+    return id ? decrypt(id) : null;
+};
 

@@ -7,6 +7,7 @@ import { API_BASE_URL } from '../config';
 import { useStudent } from '../context/StudentContext';
 import { QRCodeCanvas } from 'qrcode.react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { getToken, getStudentId } from '../services/studentStorage';
 
 // --- Helper Functions ---
 
@@ -91,10 +92,10 @@ const LastRequest = () => {
         };
     }, [showQR]);
 
-    const token = localStorage.getItem('studentToken');
-    const sid = localStorage.getItem('studentId');
-
     useEffect(() => {
+        const token = getToken();
+        const sid = getStudentId();
+        
         if (!token || !sid) {
             navigate('/');
             return;

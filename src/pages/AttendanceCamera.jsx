@@ -8,6 +8,7 @@ import * as faceapi from 'face-api.js';
 import { API_BASE_URL } from '../config';
 import toast from 'react-hot-toast';
 import { useStudent } from '../context/StudentContext';
+import { getToken, getStudentId } from '../services/studentStorage';
 
 const AttendanceCamera = () => {
     const { profile } = useStudent();
@@ -24,6 +25,7 @@ const AttendanceCamera = () => {
     const [isFaceDetected, setIsFaceDetected] = useState(false);
     const [debugInfo, setDebugInfo] = useState('');
     const [liveDetectionStatus, setLiveDetectionStatus] = useState('POSITION FACE IN FRAME');
+    const [isVerifying, setIsVerifying] = useState(true);
     const navigate = useNavigate();
 
     const format12Hour = (timeStr) => {
@@ -96,9 +98,15 @@ const AttendanceCamera = () => {
     useEffect(() => {
         const checkRestrictions = async () => {
             try {
-                const token = localStorage.getItem('studentToken');
-                const sid = localStorage.getItem('studentId');
-                if (!sid || !token) return;
+                const token = getToken();
+                const sid = getStudentId();
+                
+                // Wait for profile to load from context if it's currently null
+                if (!profile) {
+                    // If no token/sid, we can't do anything, PermissionGuard handles redirect
+                    if (!token || !sid) return;
+                    return; 
+                }
 
                 if (profile && profile.hostelId) {
                     const hostelId = profile.hostelId;
@@ -125,13 +133,11 @@ const AttendanceCamera = () => {
 
                     const myHostel = schemas.find(h => h.code?.toLowerCase() === hostelId?.toLowerCase());
                     if (myHostel) {
-                        // Time Check using IST
+                        // 1. Time Check using IST
                         const start = myHostel.attendanceStartTime || "00:00";
                         const end = myHostel.attendanceEndTime || "23:59";
                         
-                        // Get current time in IST
                         const nowIST = new Date(new Date().toLocaleString("en-US", { timeZone: "Asia/Kolkata" }));
-                        
                         const setTime = (tStr) => {
                             const [h, m] = tStr.split(':');
                             const d = new Date(new Date().toLocaleString("en-US", { timeZone: "Asia/Kolkata" }));
@@ -148,12 +154,17 @@ const AttendanceCamera = () => {
                             return;
                         }
 
-                        // Location Check (Double Check)
+                        // 2. Location Check (Synchronous Await)
                         if (myHostel.geoCoordinates && myHostel.geoCoordinates.latitude) {
                             const target = myHostel.geoCoordinates;
 
                             if ("geolocation" in navigator) {
-                                navigator.geolocation.getCurrentPosition((pos) => {
+                                // Wrap geolocation in a promise to await it
+                                try {
+                                    const pos = await new Promise((resolve, reject) => {
+                                        navigator.geolocation.getCurrentPosition(resolve, reject, { enableHighAccuracy: true });
+                                    });
+
                                     const R = 6371e3;
                                     const lat1 = pos.coords.latitude;
                                     const lon1 = pos.coords.longitude;
@@ -172,14 +183,22 @@ const AttendanceCamera = () => {
                                     if (dist > (target.radius || 200)) {
                                         toast.error(`You are out of range (${Math.round(dist)}m). Go closer to hostel.`);
                                         navigate('/dashboard');
+                                        return;
                                     }
-                                }, null, { enableHighAccuracy: true });
+                                } catch (geoErr) {
+                                    toast.error("Could not verify location. Please enable GPS.");
+                                    navigate('/dashboard');
+                                    return;
+                                }
                             }
                         }
                     }
                 }
+                // If we reached here, all checks passed
+                setIsVerifying(false);
             } catch (error) {
                 console.error("Check failed", error);
+                // On error, we might want to stay in verifying or redirect
             }
         };
         checkRestrictions();
@@ -329,13 +348,13 @@ const AttendanceCamera = () => {
             const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/jpeg', 0.8));
             const formData = new FormData();
             formData.append('image', blob, 'attendance.jpg');
-            formData.append('studentId', localStorage.getItem('studentId'));
+            formData.append('studentId', getStudentId());
             formData.append('latitude', location?.latitude);
             formData.append('longitude', location?.longitude);
             formData.append('faceDescriptor', JSON.stringify(Array.from(detection.descriptor)));
 
             const res = await axios.post(`${API_BASE_URL}/attendance/mark`, formData, { 
-                headers: { 'Authorization': `Bearer ${localStorage.getItem('studentToken')}` } 
+                headers: { 'Authorization': `Bearer ${getToken()}` } 
             });
 
             setDetectedName(res.data.studentName);
@@ -390,7 +409,7 @@ const AttendanceCamera = () => {
                         boxShadow: '0 0 80px rgba(0,0,0,0.5), 0 0 20px rgba(37, 99, 235, 0.1)'
                     }}
                 >
-                    {modelsLoaded ? (
+                    {modelsLoaded && !isVerifying ? (
                         <>
                             <Webcam ref={webcamRef} audio={false} screenshotFormat="image/jpeg"
                                 videoConstraints={{ facingMode: "user", aspectRatio: 1 }}
@@ -434,8 +453,11 @@ const AttendanceCamera = () => {
                             )}
                         </>
                     ) : (
-                        <div style={{ height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', background: '#020617' }}>
-                            <RefreshCw size={48} color="#3b82f6" className="animate-spin" />
+                        <div style={{ height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', background: '#020617', padding: '40px', textAlign: 'center' }}>
+                            <RefreshCw size={48} color="#3b82f6" className="animate-spin" style={{ marginBottom: '16px' }} />
+                            <p style={{ color: 'rgba(255,255,255,0.6)', fontWeight: '700', fontSize: '0.8rem', letterSpacing: '2px', textTransform: 'uppercase' }}>
+                                {isVerifying ? "VERIFYING LOCATION & TIME" : "INITIALIZING CAMERA"}
+                            </p>
                         </div>
                     )}
                 </motion.div>

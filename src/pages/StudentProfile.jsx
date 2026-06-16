@@ -12,6 +12,7 @@ import { API_BASE_URL } from '../config';
 import { useStudent } from '../context/StudentContext';
 import Cropper from 'react-easy-crop';
 import ConfirmModal from '../components/ConfirmModal';
+import { getToken, getStudentId } from '../services/studentStorage';
 
 // Helper function to extract cropped image blob
 const getCroppedImg = async (imageSrc, pixelCrop) => {
@@ -97,8 +98,8 @@ const StudentProfile = () => {
     const [zoom, setZoom] = useState(1);
     const [croppedAreaPixels, setCroppedAreaPixels] = useState(null);
 
-    const token = localStorage.getItem('studentToken');
-    const sid = localStorage.getItem('studentId');
+    const token = getToken();
+    const sid = getStudentId();
 
     useEffect(() => {
         if (!token || !sid) {
@@ -134,7 +135,10 @@ const StudentProfile = () => {
 
     const fetchProfileImage = async () => {
         try {
-            const res = await axios.get(`${API_BASE_URL}/upload/getImage/${sid}`);
+            const sid = getStudentId();
+            const res = await axios.get(`${API_BASE_URL}/upload/getImage/${sid}`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
             if (res.data && res.data.imageExist) {
                 setProfileImageUrl(res.data.imagePath);
                 localStorage.setItem('studentProfilePicCache', res.data.imagePath);

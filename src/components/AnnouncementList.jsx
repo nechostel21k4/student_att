@@ -6,6 +6,8 @@ import { Megaphone, Calendar, User, Tag } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useOutletContext } from 'react-router-dom';
 
+import { getToken, getStudentId } from '../services/studentStorage';
+
 const AnnouncementList = ({ hostelId }) => {
     const [announcements, setAnnouncements] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -18,7 +20,7 @@ const AnnouncementList = ({ hostelId }) => {
 
         const fetchAnnouncements = async () => {
             try {
-                const token = localStorage.getItem('studentToken');
+                const token = getToken();
                 const response = await axios.get(`${API_BASE_URL}/announcement/get?hostelId=${hostelId}`, {
                     headers: { 'Authorization': `Bearer ${token}` }
                 });

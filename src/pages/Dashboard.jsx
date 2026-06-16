@@ -13,6 +13,7 @@ import axios from 'axios';
 import toast from 'react-hot-toast';
 import { useStudent } from '../context/StudentContext';
 import { getCachedImage } from '../services/imageDb';
+import { getToken, getStudentId } from '../services/studentStorage';
 
 const NavItem = ({ icon: Icon, label, active, onClick, danger, isSidebarExpanded }) => (
     <div
@@ -54,6 +55,16 @@ const format12Hour = (timeStr) => {
     return `${h}:${minutes} ${ampm}`;
 };
 
+// Helper to inject Cloudinary resizing parameters
+const optimizeCloudinaryUrl = (url, width = 200, height = 200) => {
+    if (!url || !url.includes('cloudinary.com')) return url;
+    // Check if it already has transformations
+    if (url.includes('/upload/v')) {
+        return url.replace('/upload/', `/upload/w_${width},h_${height},c_fill,q_auto,f_auto/`);
+    }
+    return url;
+};
+
 const Dashboard = () => {
     const navigate = useNavigate();
     const { profile, loading: profileLoading } = useStudent();
@@ -72,7 +83,7 @@ const Dashboard = () => {
     useEffect(() => {
         const fetchTimings = async () => {
             try {
-                const token = localStorage.getItem('studentToken');
+                const token = getToken();
                 const res = await axios.get(`${API_BASE_URL}/meal/active-meal`, {
                     headers: { 'Authorization': `Bearer ${token}` }
                 });
@@ -119,8 +130,8 @@ const Dashboard = () => {
     }, [location, navigate]);
 
     useEffect(() => {
-        const token = localStorage.getItem('studentToken');
-        const sid = localStorage.getItem('studentId');
+        const token = getToken();
+        const sid = getStudentId();
         if (!token) { navigate('/'); return; }
         setStudentId(sid);
     }, [navigate]);
@@ -142,8 +153,8 @@ const Dashboard = () => {
     useEffect(() => {
         const validateTimeAndFetchGeo = async () => {
             try {
-                const token = localStorage.getItem('studentToken');
-                const sid = localStorage.getItem('studentId');
+                const token = getToken();
+                const sid = getStudentId();
                 if (!sid || !token || !profile || !profile.hostelId) return;
 
                 const hostelId = profile.hostelId;
@@ -203,7 +214,7 @@ const Dashboard = () => {
                     } else {
                         try {
                             const historyRes = await axios.get(`${API_BASE_URL}/attendance/history/${sid}`, {
-                                headers: { 'Authorization': `Bearer ${token}` }
+                                headers: { 'Authorization': `Bearer ${getToken()}` }
                             });
                             const marked = historyRes.data && Array.isArray(historyRes.data) ? historyRes.data.some(r => r.date === todayStr) : false;
                             setIsAlreadyMarked(marked);
@@ -223,19 +234,25 @@ const Dashboard = () => {
         };
 
         if (profile) {
-            validateTimeAndFetchGeo();
-            // Background sync every 30 seconds to catch Admin changes instantly
+            // DEFER heavy logic to allow LCP paint first
+            const timeout = setTimeout(validateTimeAndFetchGeo, 500);
             const interval = setInterval(validateTimeAndFetchGeo, 30000);
-            return () => clearInterval(interval);
+            return () => {
+                clearTimeout(timeout);
+                clearInterval(interval);
+            };
         }
     }, [profile]);
 
     useEffect(() => {
         const fetchProfileImage = async () => {
-            const sid = localStorage.getItem('studentId');
+            const sid = getStudentId();
             if (!sid) return;
             try {
-                const res = await axios.get(`${API_BASE_URL}/upload/getImage/${sid}`);
+                const token = getToken();
+                const res = await axios.get(`${API_BASE_URL}/upload/getImage/${sid}`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
                 if (res.data && res.data.imageExist) {
                     setProfileImageUrl(res.data.imagePath);
                     localStorage.setItem('studentProfilePicCache', res.data.imagePath);
@@ -289,7 +306,10 @@ const Dashboard = () => {
             try {
                 const cachedMarquee = sessionStorage.getItem('marqueeCache');
                 if (cachedMarquee) setMarquee(JSON.parse(cachedMarquee));
-                const res = await axios.get(`${API_BASE_URL}/marquee`);
+                const token = getToken();
+                const res = await axios.get(`${API_BASE_URL}/marquee`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
                 if (res.data) {
                     setMarquee(res.data);
                     sessionStorage.setItem('marqueeCache', JSON.stringify(res.data));
@@ -301,65 +321,77 @@ const Dashboard = () => {
         fetchMarquee();
     }, []);
 
-    useEffect(() => {
-        const loadImages = async () => {
-            const [banner, attend, help] = await Promise.all([
-                getCachedImage('/foodbanner.webp'),
-                getCachedImage('/attendance_banner.webp'),
-                getCachedImage('/help_char.webp')
-            ]);
-            setBannerUrl(banner);
-            setAttendUrl(attend);
-            setHelpUrl(help);
-        };
-        loadImages();
-    }, []);
-
     const [bannerUrl, setBannerUrl] = useState('/foodbanner.webp');
     const [attendUrl, setAttendUrl] = useState('/attendance_banner.webp');
     const [helpUrl, setHelpUrl] = useState('/help_char.webp');
+
+    useEffect(() => {
+        const loadImages = async () => {
+            // We use standard caching for critical LCP images (banner, attend)
+            // but keep IndexedDB for larger/dynamic help assets if needed
+            const help = await getCachedImage('/help_char.webp');
+            if (help) setHelpUrl(help);
+        };
+        loadImages();
+    }, []);
 
     return (
         <div style={{
             flex: 1, overflowY: 'auto', width: '100%', maxWidth: '1200px',
             margin: '0 auto', padding: '16px 20px', fontFamily: "'Poppins', sans-serif"
         }}>
-            {/* Notification Bar */}
-            {marquee.isEnabled && marquee.text && (
-                <div style={{
-                    width: '100%', height: '44px', color: '#C4B5FD', padding: '0 16px',
-                    fontWeight: '500', fontSize: '13px', overflow: 'hidden', marginBottom: '24px',
-                    display: 'flex', alignItems: 'center', background: '#0B1020',
-                    borderTop: '1px solid #1C2236', borderBottom: '1px solid #1C2236',
-                    borderRadius: '8px', userSelect: 'none', gap: '12px'
-                }}>
-                    <Megaphone size={18} color="#3b82f6" style={{ flexShrink: 0 }} />
-                    <div style={{ flex: 1, overflow: 'hidden', display: 'flex' }}>
-                        <div className="marquee-content" style={{ animationDuration: '10s' }}>
-                            <span>{marquee.text} &nbsp; • &nbsp; </span>
-                            <span>{marquee.text} &nbsp; • &nbsp; </span>
+            {/* Notification Bar - Fixed Height Wrapper to prevent CLS */}
+            <div style={{ minHeight: marquee.isEnabled && marquee.text ? '68px' : '0px' }}>
+                {marquee.isEnabled && marquee.text && (
+                    <div style={{
+                        width: '100%', height: '44px', color: '#C4B5FD', padding: '0 16px',
+                        fontWeight: '500', fontSize: '13px', overflow: 'hidden', marginBottom: '24px',
+                        display: 'flex', alignItems: 'center', background: '#0B1020',
+                        borderTop: '1px solid #1C2236', borderBottom: '1px solid #1C2236',
+                        borderRadius: '8px', userSelect: 'none', gap: '12px'
+                    }}>
+                        <Megaphone size={18} color="#3b82f6" style={{ flexShrink: 0 }} />
+                        <div style={{ flex: 1, overflow: 'hidden', display: 'flex' }}>
+                            <div className="marquee-content" style={{ animationDuration: '10s' }}>
+                                <span>{marquee.text} &nbsp; • &nbsp; </span>
+                                <span>{marquee.text} &nbsp; • &nbsp; </span>
+                            </div>
                         </div>
                     </div>
-                </div>
-            )}
+                )}
+            </div>
 
             {/* Header */}
             <div style={{ display: 'flex', justifyContent: 'flex-start', alignItems: 'center', marginBottom: '24px', padding: '0 4px', gap: '16px' }}>
                 <div style={{
                     width: '52px', height: '52px', borderRadius: '14px',
-                    background: profileImageUrl ? 'transparent' : '#2563eb',
+                    background: '#1e293b', // Stable background to prevent shift
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
                     fontSize: '20px', fontWeight: '600', color: '#FFFFFF', overflow: 'hidden',
-                    border: profileImageUrl ? '1.5px solid rgba(255,255,255,0.1)' : 'none',
-                    boxShadow: '0 4px 12px rgba(0,0,0,0.2)'
+                    border: '1.5px solid rgba(255,255,255,0.1)',
+                    boxShadow: '0 4px 12px rgba(0,0,0,0.2)',
+                    flexShrink: 0
                 }}>
-                    {profileImageUrl ? <img src={profileImageUrl} alt="Profile" style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'top' }} /> : (studentName ? studentName.charAt(0).toUpperCase() : 'S')}
+                    {profileImageUrl ? (
+                        <img 
+                            src={optimizeCloudinaryUrl(profileImageUrl, 150, 150)} 
+                            alt="Profile" 
+                            style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'top' }} 
+                        />
+                    ) : (
+                        studentName ? studentName.charAt(0).toUpperCase() : <User size={24} />
+                    )}
                 </div>
-                <div>
+                <div style={{ minWidth: '150px' }}>
                     <p style={{ color: '#FFFFFF', fontSize: '14px', marginBottom: '2px', fontWeight: '500', opacity: 0.9 }}>Welcome back,</p>
-                    <h1 style={{ fontSize: '28px', margin: 0, fontWeight: '700', color: '#FFFFFF', letterSpacing: '0.5px' }}>{studentName ? studentName.split(' ')[0].toUpperCase() : 'STUDENT'}</h1>
+                    <h1 style={{ fontSize: '28px', margin: 0, fontWeight: '700', color: '#FFFFFF', letterSpacing: '0.5px', height: '36px' }}>
+                        {studentName ? studentName.split(' ')[0].toUpperCase() : (profileLoading ? '...' : 'STUDENT')}
+                    </h1>
                 </div>
             </div>
+
+            {/* Preload LCP Image */}
+            {attendUrl && <img src={attendUrl} style={{ display: 'none' }} fetchpriority="high" alt="LCP Preload" />}
 
             <div style={{ maxWidth: '850px', margin: '0 auto' }}>
                 
@@ -367,16 +399,22 @@ const Dashboard = () => {
                 <div 
                     onClick={() => navigate('/food')}
                     style={{
-                        backgroundImage: `linear-gradient(rgba(0,0,0,0.4), rgba(0,0,0,0.6)), url("${bannerUrl}")`,
-                        backgroundSize: 'cover',
-                        backgroundPosition: 'center',
-                        backdropFilter: 'blur(20px)', border: '1px solid rgba(255,255,255,0.1)',
+                        backgroundColor: '#0B1020',
                         borderRadius: '24px', padding: '16px 20px', marginBottom: '20px', cursor: 'pointer',
                         position: 'relative', overflow: 'hidden', display: 'flex', alignItems: 'center',
                         justifyContent: 'space-between', boxShadow: '0 15px 30px rgba(0,0,0,0.3)',
-                        minHeight: '100px'
+                        minHeight: '100px', border: '1px solid rgba(255,255,255,0.1)',
+                        aspectRatio: '16/7' // Fix CLS: Reserve space immediately
                     }}
                 >
+                    {/* High-Performance Image Layer */}
+                    <img 
+                        src={optimizeCloudinaryUrl(bannerUrl, 800, 400)} 
+                        alt="" 
+                        style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', opacity: 0.5, zIndex: 1 }} 
+                    />
+                    <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(rgba(0,0,0,0.2), rgba(0,0,0,0.5))', zIndex: 1 }}></div>
+
                     <div style={{ position: 'relative', zIndex: 2 }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
                             <currentMeal.icon size={16} color="#ff85c0" />
@@ -384,7 +422,9 @@ const Dashboard = () => {
                                 {currentMeal.type} {currentMeal.timing && `(${currentMeal.timing})`}
                             </span>
                         </div>
-                        <h2 style={{ fontSize: '1.3rem', fontWeight: '900', color: '#FFFFFF', margin: 0, textShadow: '0 2px 10px rgba(0,0,0,0.5)' }}>{currentMeal.greeting}</h2>
+                        <div style={{ height: '1.6rem' }}> {/* Stable height for greeting */}
+                            <h2 style={{ fontSize: '1.3rem', fontWeight: '900', color: '#FFFFFF', margin: 0, textShadow: '0 2px 10px rgba(0,0,0,0.5)' }}>{currentMeal.greeting}</h2>
+                        </div>
                         <p style={{ fontSize: '0.8rem', color: 'rgba(255,255,255,0.9)', marginTop: '2px', fontWeight: '600' }}>
                             {currentMeal.timing === 'Closed' ? 'Canteen is closed' : 'Tap to scan QR'}
                         </p>
@@ -400,7 +440,7 @@ const Dashboard = () => {
                     </div>
 
                     {/* Decorative Background Icon */}
-                    <Utensils size={120} style={{ position: 'absolute', right: '-20px', top: '-20px', color: 'white', opacity: 0.03, transform: 'rotate(-15deg)' }} />
+                    <Utensils size={120} style={{ position: 'absolute', right: '-20px', top: '-20px', color: 'white', opacity: 0.03, transform: 'rotate(-15deg)', zIndex: 1 }} />
                 </div>
 
                 {/* Check-in Card / Face Registration Card */}
@@ -413,14 +453,24 @@ const Dashboard = () => {
                 }} style={{ cursor: 'pointer' }}>
                     <div className="checkin-card" style={{
                         backgroundColor: !isRegistered ? '#1e1b4b' : isAlreadyMarked ? '#064e3b' : '#1e293b',
-                        backgroundImage: `linear-gradient(rgba(0,0,0,${!isRegistered ? 0.6 : 0.3}), rgba(0,0,0,${!isRegistered ? 0.7 : 0.3})), url("${attendUrl}")`,
-                        backgroundSize: 'cover', backgroundPosition: 'center',
                         borderRadius: '28px', padding: '24px', display: 'flex', flexDirection: 'column',
                         minHeight: '180px', marginBottom: '24px', position: 'relative', overflow: 'hidden',
                         boxShadow: '0 20px 50px -12px rgba(0,0,0,0.5)', 
-                        border: !isRegistered ? '2px solid #6366f1' : isAlreadyMarked ? '2px solid rgba(16, 185, 129, 0.4)' : '1px solid rgba(255,255,255,0.06)'
+                        border: !isRegistered ? '2px solid #6366f1' : isAlreadyMarked ? '2px solid rgba(16, 185, 129, 0.4)' : '1px solid rgba(255,255,255,0.06)',
+                        aspectRatio: '16/9' // Fix CLS: Reserve space immediately
                     }}>
+                        {/* LCP Critical Image Layer */}
+                        <img 
+                            src={optimizeCloudinaryUrl(attendUrl, 800, 400)} 
+                            alt="" 
+                            fetchpriority="high"
+                            style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', opacity: !isRegistered ? 0.4 : 0.7, zIndex: 1 }} 
+                        />
+                        <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(rgba(0,0,0,0.2), rgba(0,0,0,0.6))', zIndex: 1 }}></div>
+
                         <div style={{ position: 'relative', zIndex: 2, height: '100%', display: 'flex', flexDirection: 'column' }}>
+
+
                             {!isRegistered ? (
                                 <div style={{ background: 'rgba(239, 68, 68, 0.2)', width: 'fit-content', padding: '6px 16px', borderRadius: '8px', display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px', border: '1px solid rgba(239, 68, 68, 0.3)' }}>
                                     <ScanFace size={14} color="#fca5a5" />
@@ -511,7 +561,14 @@ const Dashboard = () => {
                     </div>
                     <div style={{ position: 'absolute', right: '10px', bottom: '10px', width: '180px', height: '180px', background: 'radial-gradient(circle, rgba(168, 85, 247, 0.15) 0%, rgba(11, 18, 32, 0) 70%)', zIndex: 0, borderRadius: '50%' }}></div>
                     <div style={{ position: 'absolute', right: '-15px', bottom: '-55px', width: '210px', height: '210px', zIndex: 1, display: 'flex', alignItems: 'flex-end', justifyContent: 'flex-end' }}>
-                        <img src={helpUrl} alt="Help Character" style={{ width: '100%', height: '100%', objectFit: 'contain', filter: 'drop-shadow(0 0 25px rgba(168, 85, 247, 0.35))' }} />
+                        <img 
+                            src={helpUrl} 
+                            alt="Help Character" 
+                            width="210"
+                            height="210"
+                            loading="lazy"
+                            style={{ width: '100%', height: '100%', objectFit: 'contain', filter: 'drop-shadow(0 0 25px rgba(168, 85, 247, 0.35))' }} 
+                        />
                     </div>
                 </div>
             </div>

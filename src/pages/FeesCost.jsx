@@ -6,6 +6,7 @@ import { API_BASE_URL } from '../config';
 import { CreditCard, Calendar, Info, Clock, IndianRupee } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useStudent } from '../context/StudentContext';
+import { getToken, getStudentId } from '../services/studentStorage';
 
 const FeesCost = () => {
     const { profile } = useStudent();
@@ -18,8 +19,8 @@ const FeesCost = () => {
     useEffect(() => {
         const fetchStudentDataAndReminders = async () => {
             try {
-                const token = localStorage.getItem('studentToken');
-                const sid = localStorage.getItem('studentId');
+                const token = getToken();
+                const sid = getStudentId();
 
                 if (!token || !sid) {
                     navigate('/');

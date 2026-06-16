@@ -7,6 +7,7 @@ import AnnouncementList from '../components/AnnouncementList';
 import { ArrowLeft } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useStudent } from '../context/StudentContext';
+import { getToken, getStudentId } from '../services/studentStorage';
 
 const StudentAnnouncements = () => {
     const { profile } = useStudent();
@@ -18,8 +19,8 @@ const StudentAnnouncements = () => {
     useEffect(() => {
         const fetchStudentProfile = async () => {
             try {
-                const token = localStorage.getItem('studentToken');
-                const sid = localStorage.getItem('studentId');
+                const token = getToken();
+                const sid = getStudentId();
 
                 if (!token || !sid) {
                     navigate('/');

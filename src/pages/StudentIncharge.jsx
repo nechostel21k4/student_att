@@ -4,6 +4,7 @@ import axios from 'axios';
 import { User, Phone, Mail, Shield, Contact } from 'lucide-react';
 import { API_BASE_URL } from '../config';
 import { useStudent } from '../context/StudentContext';
+import { getToken, getStudentId } from '../services/studentStorage';
 
 const StudentIncharge = () => {
     const { profile } = useStudent();
@@ -12,8 +13,8 @@ const StudentIncharge = () => {
     const [loading, setLoading] = useState(true);
     const [studentHostelId, setStudentHostelId] = useState(null);
 
-    const token = localStorage.getItem('studentToken');
-    const sid = localStorage.getItem('studentId');
+    const token = getToken();
+    const sid = getStudentId();
 
     useEffect(() => {
         if (!token || !sid) {

@@ -2,37 +2,35 @@ import React, { useRef, useState, useEffect } from 'react';
 import Webcam from 'react-webcam';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
+import * as faceapi from 'face-api.js';
 import { API_BASE_URL } from '../config';
 import { Camera, CheckCircle, AlertTriangle, ScanFace } from 'lucide-react';
 import { useStudent } from '../context/StudentContext';
+import { getStudentId, getToken } from '../services/studentStorage';
 
 const RegisterFace = () => {
-    const { loadProfile } = useStudent();
+    const { profile, loadProfile } = useStudent();
     const webcamRef = useRef(null);
     const [capturing, setCapturing] = useState(false);
     const [message, setMessage] = useState('');
     const [status, setStatus] = useState('idle'); // idle, success, error
     const [capturedImage, setCapturedImage] = useState(null);
     const [modelsLoaded, setModelsLoaded] = useState(false);
-    const [faceApi, setFaceApi] = useState(null);
     const navigate = useNavigate();
 
-    // Load FaceAPI Models
     useEffect(() => {
         const loadModels = async () => {
             const MODEL_URL = '/models';
             try {
-                const faceapiModule = await import('face-api.js');
-                setFaceApi(faceapiModule);
                 await Promise.all([
-                    faceapiModule.nets.ssdMobilenetv1.loadFromUri(MODEL_URL),
-                    faceapiModule.nets.faceLandmark68Net.loadFromUri(MODEL_URL),
-                    faceapiModule.nets.faceRecognitionNet.loadFromUri(MODEL_URL)
+                    faceapi.nets.ssdMobilenetv1.loadFromUri(MODEL_URL),
+                    faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL),
+                    faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL)
                 ]);
                 setModelsLoaded(true);
             } catch (err) {
                 console.error("Model Load Error:", err);
-                setMessage("Failed to load AI models. Please refresh.");
+                setMessage('Error loading face models.');
                 setStatus('error');
             }
         };
@@ -41,10 +39,9 @@ const RegisterFace = () => {
 
     const handleCapture = () => {
         const imageSrc = webcamRef.current.getScreenshot();
-        if (imageSrc) {
-            setCapturedImage(imageSrc);
-            setMessage('');
-        }
+        setCapturedImage(imageSrc);
+        setMessage('');
+        setStatus('idle');
     };
 
     const handleRetake = () => {
@@ -55,7 +52,7 @@ const RegisterFace = () => {
 
     const registerFace = async () => {
         if (!capturedImage) return;
-        if (!modelsLoaded || !faceApi) {
+        if (!modelsLoaded) {
             setMessage('AI Models still loading... please wait.');
             return;
         }
@@ -80,7 +77,7 @@ const RegisterFace = () => {
             ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
 
             // Detect Face
-            const detection = await faceApi.detectSingleFace(canvas, new faceApi.SsdMobilenetv1Options({ minConfidence: 0.5 }))
+            const detection = await faceapi.detectSingleFace(canvas, new faceapi.SsdMobilenetv1Options({ minConfidence: 0.5 }))
                 .withFaceLandmarks()
                 .withFaceDescriptor();
 
@@ -94,15 +91,13 @@ const RegisterFace = () => {
             // 2. Prepare Upload
             setMessage('Registering...');
             const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/jpeg', 0.8));
-            const descriptor = Array.from(detection.descriptor);
 
             const formData = new FormData();
             formData.append('image', blob, 'face.jpg');
-            formData.append('rollNo', localStorage.getItem('studentId'));
-            formData.append('faceDescriptor', JSON.stringify(descriptor));
+            formData.append('rollNo', getStudentId()); // Use clear ID
 
             // 3. Send to Backend
-            const token = localStorage.getItem('studentToken');
+            const token = getToken(); // Use clear Token
             await axios.post(`${API_BASE_URL}/attendance/register-face`, formData, { 
                 headers: { 
                     'Content-Type': 'multipart/form-data',
@@ -116,7 +111,6 @@ const RegisterFace = () => {
             setTimeout(() => navigate('/dashboard'), 2000);
 
         } catch (error) {
-            // Error logged without exposing server details
             setMessage('Registration Failed. Try again.');
             setStatus('error');
         }
@@ -137,7 +131,7 @@ const RegisterFace = () => {
             <div style={{ textAlign: 'center', marginBottom: '8px' }}>
                 <h2 style={{ fontSize: '1.5rem', fontWeight: '800', margin: '0 0 4px 0', color: 'white', letterSpacing: '-0.5px' }}>Register Face</h2>
                 <p style={{ margin: 0, fontSize: '0.9rem', color: 'rgba(255,255,255,0.6)', fontWeight: '600', textTransform: 'uppercase', letterSpacing: '1px' }}>
-                    {localStorage.getItem('studentName') || localStorage.getItem('studentId')}
+                    {profile?.name || getStudentId()}
                 </p>
             </div>
 

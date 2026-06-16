@@ -7,6 +7,7 @@ import toast from 'react-hot-toast';
 import DatePicker from 'react-datepicker';
 import "react-datepicker/dist/react-datepicker.css";
 import { useStudent } from '../context/StudentContext';
+import { getStudentId, getToken } from '../services/studentStorage';
 
 // SmartDatePicker Component
 const SmartDatePicker = ({ ...props }) => {
@@ -29,14 +30,8 @@ const SmartDatePicker = ({ ...props }) => {
 
         // Auto-close logic for "read-only" (picker) mode
         if (!isManual && datePickerRef.current) {
-            // If it's a simple Date picker or Time only picker, close immediately on selection
-            // We check props to see what kind of picker it is
             const isDateOnly = !props.showTimeSelect && !props.showTimeInput;
             const isTimeOnly = props.showTimeSelectOnly || props.showTimeInput;
-
-            // Note: For showTimeSelect (Date + Time), usually we want to keep it open after Date pick
-            // so user can pick time. React-datepicker handles closing after Time pick by default.
-            // If user is reporting "not closing", we ensure we enforce it for single-step actions at least.
 
             if (isDateOnly || isTimeOnly) {
                 datePickerRef.current.setOpen(false);
@@ -49,27 +44,15 @@ const SmartDatePicker = ({ ...props }) => {
             <DatePicker
                 {...props}
                 ref={datePickerRef}
-                onChange={handleChange} // Intercept onChange
-                shouldCloseOnSelect={true} // Enforce default
-                // When manual is FALSE:
-                // We want the picker to open on click. 
-                // We do NOT want the keyboard to open.
-                // Moving readOnly to the input itself via customInput ensures DatePicker still receives click events but the input doesn't trigger keyboard.
-
-                // When manual is TRUE: 
-                // We want the keyboard to open.
-                // We might NOT want the picker to open automatically on focus (optional, but standard behavior is fine).
-
+                onChange={handleChange}
+                shouldCloseOnSelect={true}
                 onBlur={() => setIsManual(false)}
                 customInput={
                     <input
-                        // Apply readOnly ONLY to the input element when not manual
                         readOnly={!isManual}
-                        // inputMode="none" helps on some mobile browsers to prevent keyboard if readOnly isn't enough
                         inputMode={!isManual ? "none" : "text"}
                         autoComplete="off"
                         style={{ paddingRight: '40px' }}
-                        // Explicitly open on click if readOnly (sometimes needed depending on browser behavior)
                         onClick={() => {
                             if (!isManual && datePickerRef.current) {
                                 datePickerRef.current.setOpen(true);
@@ -121,8 +104,8 @@ const StudentLeave = () => {
     const [toTime, setToTime] = useState(null); // For Permission
     const [reason, setReason] = useState('');
 
-    const token = localStorage.getItem('studentToken');
-    const sid = localStorage.getItem('studentId');
+    const token = getToken();
+    const sid = getStudentId();
 
     useEffect(() => {
         if (!token || !sid) {
@@ -197,80 +180,27 @@ const StudentLeave = () => {
         setSubmitting(true);
 
         try {
-            // Construct lastRequest object
-            const baseRequest = {
-                name: student.name,
-                rollNo: student.rollNo,
-                hostelId: student.hostelId,
-                id: `REQ${Date.now()} `, // Generated Unique ID
-                phoneNo: student.phoneNo,
-                parentPhoneNo: student.parentPhoneNo,
+            // ✅ SECURITY: Only send user-inputted fields. 
+            // Name, RollNo, Status, and IDs are now handled SERVER-SIDE.
+            const requestPayload = {
                 reason: reason,
                 type: requestType,
-                isActive: true,
-                status: 'SUBMITTED',
-                submitted: {
-                    time: new Date(),
-                    name: student.name,
-                    rollNo: student.rollNo
-                }
+                fromDate: requestType === 'LEAVE' ? fromDate : null,
+                toDate: requestType === 'LEAVE' ? toDate : null,
+                date: requestType === 'PERMISSION' ? fromDate : null,
+                fromTime: requestType === 'PERMISSION' ? (function() {
+                    const d = new Date(fromDate);
+                    d.setHours(fromTime.getHours(), fromTime.getMinutes());
+                    return d;
+                })() : null,
+                toTime: requestType === 'PERMISSION' ? (function() {
+                    const d = new Date(fromDate);
+                    d.setHours(toTime.getHours(), toTime.getMinutes());
+                    return d;
+                })() : null,
             };
 
-            let requestPayload = {};
-
-            if (requestType === 'LEAVE') {
-                // Validation: To Date cannot be before If From Date
-                if (fromDate && toDate && toDate < fromDate) {
-                    toast.error("To Date cannot be before From Date");
-                    setSubmitting(false);
-                    return;
-                }
-
-                requestPayload = {
-                    ...baseRequest,
-                    fromDate: fromDate,
-                    toDate: toDate
-                };
-            } else {
-                // Permission logic
-                // Ensure fromDate (which acts as 'Date' in permission) is set
-                const dateObj = fromDate;
-
-                // For permission, fromTime and toTime should be Date objects already set by DatePicker
-                // We just need to merge the date part if desired, but typically Permission asks for "Date" and "Time Range"
-                // The current backend likely expects a full Date object for fromTime/toTime or we construct it.
-
-                // Let's assume user picks "Date" in one picker, and "Time" in others.
-                // We need to combine them to create valid Date objects for backend if it expects full ISO dates.
-
-                // Construct full dates
-                const fTime = new Date(dateObj);
-                fTime.setHours(fromTime.getHours(), fromTime.getMinutes());
-
-                // Validation: Prevent past time
-                if (fTime < new Date()) {
-                    toast.error("From time cannot be in the past");
-                    setSubmitting(false);
-                    return;
-                }
-
-                const tTime = new Date(dateObj);
-                tTime.setHours(toTime.getHours(), toTime.getMinutes());
-
-                requestPayload = {
-                    ...baseRequest,
-                    date: dateObj,
-                    fromTime: fTime,
-                    toTime: tTime
-                };
-            }
-
-            const payload = {
-                student: student,
-                lastRequest: requestPayload
-            };
-
-            const res = await axios.post(`${API_BASE_URL}/student/createRequestAndUpdate/${sid}`, payload, {
+            const res = await axios.post(`${API_BASE_URL}/student/createRequestAndUpdate/${student.rollNo}`, { lastRequest: requestPayload }, {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
 

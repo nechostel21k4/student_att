@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { Camera, MapPin, AlertTriangle, ShieldCheck, RefreshCw, CheckCircle } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { getCachedImage } from '../services/imageDb';
+import { getToken } from '../services/studentStorage';
 import PageLoader from './Shared/PageLoader';
 
 const PermissionGuard = ({ children }) => {
@@ -18,7 +19,7 @@ const PermissionGuard = ({ children }) => {
     });
 
     // ✅ SECURITY: Redirect to login if no valid session token exists
-    const token = localStorage.getItem('studentToken');
+    const token = getToken();
     useEffect(() => {
         if (!token) {
             navigate('/', { replace: true });

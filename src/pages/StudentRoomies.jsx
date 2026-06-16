@@ -5,6 +5,7 @@ import { Users, BookOpen, Clock, AlertCircle, X, ChevronLeft, ChevronRight, User
 import { motion, AnimatePresence } from 'framer-motion';
 import { API_BASE_URL } from '../config';
 import { useStudent } from '../context/StudentContext';
+import { getToken, getStudentId } from '../services/studentStorage';
 
 const StudentRoomies = () => {
     const { profile } = useStudent();
@@ -15,8 +16,8 @@ const StudentRoomies = () => {
     const [selectedIndex, setSelectedIndex] = useState(null);
     const [showModal, setShowModal] = useState(false);
 
-    const token = localStorage.getItem('studentToken');
-    const sid = localStorage.getItem('studentId');
+    const token = getToken();
+    const sid = getStudentId();
 
     useEffect(() => {
         if (!token || !sid) {

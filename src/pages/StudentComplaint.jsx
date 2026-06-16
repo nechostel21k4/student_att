@@ -5,6 +5,7 @@ import { AlertCircle, Send, CheckCircle, XCircle, Clock, RotateCcw, MessageSquar
 import { API_BASE_URL } from '../config';
 import toast from 'react-hot-toast';
 import { useStudent } from '../context/StudentContext';
+import { getStudentId, getToken } from '../services/studentStorage';
 
 const StudentComplaint = () => {
     const { profile } = useStudent();
@@ -14,8 +15,8 @@ const StudentComplaint = () => {
     const [submitting, setSubmitting] = useState(false);
     const [complaintText, setComplaintText] = useState('');
 
-    const token = localStorage.getItem('studentToken');
-    const sid = localStorage.getItem('studentId');
+    const token = getToken();
+    const sid = getStudentId();
     const [mongoId, setMongoId] = useState(null);
 
     useEffect(() => {
