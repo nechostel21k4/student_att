@@ -35,7 +35,7 @@ const DesktopSidebar = () => {
                     flexDirection: 'column',
                     position: 'relative',
                     zIndex: 100,
-                    overflow: 'hidden'
+                    overflow: 'visible'
                 }}
             >
                 {/* Logo Area */}

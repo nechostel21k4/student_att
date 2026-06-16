@@ -398,6 +398,7 @@ const Dashboard = () => {
                 {/* COMPACT MEAL HUB CARD */}
                 <div 
                     onClick={() => navigate('/food')}
+                    className="meal-hub-card"
                     style={{
                         backgroundColor: '#0B1020',
                         borderRadius: '24px', padding: '16px 20px', marginBottom: '20px', cursor: 'pointer',
@@ -586,6 +587,10 @@ const Dashboard = () => {
                     .quick-actions-grid { grid-template-columns: repeat(4, 1fr) !important; gap: 6px !important; }
                     .action-card { min-height: 90px !important; }
                     .action-card span { font-size: 8.5px !important; }
+                }
+                @media (min-width: 768px) {
+                    .meal-hub-card { height: 180px !important; aspect-ratio: auto !important; }
+                    .checkin-card { height: 240px !important; aspect-ratio: auto !important; }
                 }
             `}</style>
         </div>
